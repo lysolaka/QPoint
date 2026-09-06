@@ -1,7 +1,10 @@
 //! Utility functions, structures and constants for use by the program.
 
 mod base_control;
+mod collector_control;
+
 pub use base_control::{BaseControl, BaseSource};
+pub use collector_control::{CollectorControl, CollectorSource};
 
 /// 1 LSB for the DAC given in milivolts (mV).
 pub const DAC_1LSB: f32 = 0.805664;

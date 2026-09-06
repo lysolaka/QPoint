@@ -73,7 +73,7 @@ impl<'d> BaseControl<'d> {
 
     /// Supply `u` volts (V) at the base terminal through a 15k resistor.
     ///
-    /// The circuit can supply from 0V to 5V.
+    /// The circuit can supply from 0 V to 5 V.
     pub fn supply_voltage(&mut self, u: f32) {
         self.select(BaseSource::VSource);
 
