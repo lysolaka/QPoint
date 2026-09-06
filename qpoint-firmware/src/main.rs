@@ -6,11 +6,11 @@ use panic_probe as _;
 
 use embassy_executor::Spawner;
 
-use embassy_stm32::{peripherals, Peri};
+use embassy_stm32::{Peri, peripherals};
 
 mod config;
-pub mod util;
 mod measurement;
+pub mod util;
 
 assign_resources::assign_resources! {
     measurement: MeasurementResources {
