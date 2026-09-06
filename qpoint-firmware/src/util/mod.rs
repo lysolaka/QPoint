@@ -2,9 +2,11 @@
 
 mod base_control;
 mod collector_control;
+mod emitter_control;
 
 pub use base_control::{BaseControl, BaseSource};
 pub use collector_control::{CollectorControl, CollectorSource};
+pub use emitter_control::{EmitterControl, EmitterSource};
 
 /// 1 LSB for the DAC given in milivolts (mV).
 pub const DAC_1LSB: f32 = 0.805664;
