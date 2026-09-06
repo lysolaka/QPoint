@@ -18,6 +18,7 @@ embassy-time = { version = "0.5", features = ["defmt", "tick-hz-32_768"] }
 
 assign-resources = "0.5"
 critical-section = "1.2"
+libm = "0.2"
 portable-atomic = { version = "1.15", default-features = false, features = ["unsafe-assume-single-core"] }
 static_cell = "2.1"
 
