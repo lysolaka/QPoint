@@ -1,7 +1,7 @@
 use embassy_stm32::rcc::{AHBPrescaler, APBPrescaler};
 use embassy_stm32::rcc::{Hse, HseMode, Sysclk};
 use embassy_stm32::rcc::{
-    Pll, PllMul, PllPreDiv, PllQDiv, PllRDiv, PllSource, VoltageRange, mux::Usbsel,
+    Pll, PllMul, PllPreDiv, PllQDiv, PllRDiv, PllSource, VoltageRange, mux::Adcsel, mux::Usbsel,
 };
 use embassy_stm32::time::Hertz;
 
@@ -24,6 +24,7 @@ pub fn hal_config() -> embassy_stm32::Config {
     c.rcc.ahb_pre = AHBPrescaler::DIV1;
     c.rcc.apb1_pre = APBPrescaler::DIV1;
 
+    c.rcc.mux.adcsel = Adcsel::SYS;
     c.rcc.mux.usbsel = Usbsel::PLL1_Q;
 
     c.rcc.voltage_range = VoltageRange::RANGE1;

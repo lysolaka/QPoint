@@ -16,6 +16,7 @@ assign_resources::assign_resources! {
     measurement: MeasurementResources {
         dac: DAC1,
         adc: ADC1,
+        dma: DMA2_CH1,
         base_sel1: PB13,
         base_sel2: PB14,
         base_dac: PA5,
@@ -28,6 +29,10 @@ assign_resources::assign_resources! {
         emitter_sel2: PB11,
     },
 }
+
+embassy_stm32::bind_interrupts!(struct Interrupts {
+    DMA1_CH4_7_DMA2_CH1_5_DMAMUX1_OVR => embassy_stm32::dma::InterruptHandler<peripherals::DMA2_CH1>;
+});
 
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {

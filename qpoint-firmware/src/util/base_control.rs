@@ -4,7 +4,7 @@ use embassy_stm32::gpio::{Level, Output, Pin, Speed};
 use embassy_stm32::mode::Blocking;
 
 use crate::util;
-use crate::util::DAC_1LSB;
+use crate::util::U3V3_1LSB;
 
 /// Driver for the base terminal capable of sourcing and sinking current, and supplying voltage.
 ///
@@ -128,10 +128,10 @@ impl BaseSource {
         match self {
             BaseSource::HighZ => 0,
             BaseSource::ISource | BaseSource::ISink => {
-                libm::roundf((value * 22.0) / DAC_1LSB) as u16
+                libm::roundf((value * 22.0) / U3V3_1LSB) as u16
             },
             BaseSource::VSource => {
-                libm::roundf(value / (1.515152 * DAC_1LSB) * 1000.0) as u16
+                libm::roundf(value / (1.515152 * U3V3_1LSB) * 1000.0) as u16
             },
         }
     }
