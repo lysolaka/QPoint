@@ -4,7 +4,7 @@ use embassy_stm32::gpio::{Level, Output, Pin, Speed};
 use embassy_stm32::mode::Blocking;
 
 use crate::util;
-use crate::util::U3V3_1LSB;
+use crate::util::U5V_1LSB;
 
 /// Driver for the collector terminal capable of supplying voltage.
 ///
@@ -96,10 +96,9 @@ impl CollectorSource {
     /// The unit of the value is:
     /// - V for `VSource`,
     /// - *ignored* for `HighZ`, `VCC`, `GND` (returns 0).
-    // - VSource: Uo [V] = Ui [V] * 1,515152 => Ui [V] = Uo [V] / 1,515152
     fn dac_value(&self, value: f32) -> u16 {
         match self {
-            CollectorSource::VSource => libm::roundf(value / (1.515152 * U3V3_1LSB) * 1000.0) as u16,
+            CollectorSource::VSource => libm::roundf((value * 1000.0) / U5V_1LSB) as u16,
             _ => 0,
         }
     }

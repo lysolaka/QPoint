@@ -4,7 +4,7 @@ use embassy_stm32::gpio::{Level, Output, Pin, Speed};
 use embassy_stm32::mode::Blocking;
 
 use crate::util;
-use crate::util::U3V3_1LSB;
+use crate::util::{U3V3_1LSB, U5V_1LSB};
 
 /// Driver for the base terminal capable of sourcing and sinking current, and supplying voltage.
 ///
@@ -119,20 +119,17 @@ impl BaseSource {
     /// DAC setting to drive the base terminal with the given value.
     ///
     /// The unit of the value is:
-    /// - uA for `ISource` and `ISink`, 
+    /// - uA for `ISource` and `ISink`,
     /// - V for `VSource`,
     /// - *ignored* for `HighZ` (returns 0).
     // - ISource | ISink: I [A] = U [V] / 22k => U [V] = I [A] * 22k => U [mV] = I [uA] / 22
-    // - VSource: Uo [V] = Ui [V] * 1,515152 => Ui [V] = Uo [V] / 1,515152
     fn dac_value(&self, value: f32) -> u16 {
         match self {
             BaseSource::HighZ => 0,
             BaseSource::ISource | BaseSource::ISink => {
                 libm::roundf((value * 22.0) / U3V3_1LSB) as u16
-            },
-            BaseSource::VSource => {
-                libm::roundf(value / (1.515152 * U3V3_1LSB) * 1000.0) as u16
-            },
+            }
+            BaseSource::VSource => libm::roundf((value * 1000.0) / U5V_1LSB) as u16,
         }
     }
 }
