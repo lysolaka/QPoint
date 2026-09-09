@@ -1,11 +1,8 @@
-#![allow(unused)]
-
 use embassy_stm32::adc::{
     Adc, AdcChannel, AdcConfig, AnyAdcChannel, Averaging, CkModePclk, Clock, Resolution, SampleTime,
 };
-use embassy_stm32::mode::Blocking;
 use embassy_stm32::pac::adc::Adc as AdcRegs;
-use embassy_stm32::{Peri, PeripheralType, adc, dma, interrupt, peripherals};
+use embassy_stm32::{Peri, adc, dma, interrupt};
 
 use crate::util::{U3V3_1LSB, U5V_1LSB};
 
@@ -58,16 +55,18 @@ where
     {
         let mut buf = [0; 2];
 
-        self.adc.read(
-            self.dma.reborrow(),
-            interrupts,
-            [
-                (&mut self.base, SampleTime::CYCLES160_5),
-                (&mut self.collector, SampleTime::CYCLES160_5),
-            ]
-            .into_iter(),
-            &mut buf,
-        );
+        self.adc
+            .read(
+                self.dma.reborrow(),
+                interrupts,
+                [
+                    (&mut self.base, SampleTime::CYCLES160_5),
+                    (&mut self.collector, SampleTime::CYCLES160_5),
+                ]
+                .into_iter(),
+                &mut buf,
+            )
+            .await;
 
         // Ub [mV]
         let base_voltage = (buf[0] as f32) * U5V_1LSB;
