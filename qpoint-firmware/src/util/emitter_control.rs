@@ -27,6 +27,8 @@ impl<'d> EmitterControl<'d> {
 
     /// Select the circuit to drive the emitter terminal.
     pub fn select(&mut self, circuit: EmitterSource) {
+        defmt::trace!("Selecting: {:?}", circuit);
+
         self.circuit = circuit;
         let (sel2, sel1) = circuit.selection();
         self.sel1.set_level(sel1.into());

@@ -36,8 +36,9 @@ impl<'d> CollectorControl<'d> {
 
     /// Select the circuit to drive the collector terminal.
     pub fn select(&mut self, circuit: CollectorSource) {
+        defmt::trace!("Selecting: {:?}", circuit);
         // for the illusion of "safety"
-        self.set_dac(0);
+        self.dac.set(Value::Bit12Right(0));
 
         self.circuit = circuit;
         let (sel2, sel1) = circuit.selection();
@@ -62,11 +63,13 @@ impl<'d> CollectorControl<'d> {
     /// - V for [`CollectorSource::VSource`],
     /// - *ignored* for others (`value` is forced to 0).
     pub fn set_value(&mut self, value: f32) {
-        let value = match self.circuit {
+        let dac_value = match self.circuit {
             CollectorSource::VSource => self.circuit.dac_value(util::clamp(value, 0.0, 5.0)),
             _ => 0,
         };
 
-        self.dac.set(Value::Bit12Right(value));
+        defmt::trace!("Setting {=f32} for {:?} (DAC value: {=u16})", value, self.circuit, dac_value);
+
+        self.dac.set(Value::Bit12Right(dac_value));
     }
 }

@@ -36,8 +36,9 @@ impl<'d> BaseControl<'d> {
 
     /// Select the circuit to drive the base terminal.
     pub fn select(&mut self, circuit: BaseSource) {
+        defmt::trace!("Selecting: {:?}", circuit);
         // for the illusion of "safety"
-        self.set_dac(0);
+        self.dac.set(Value::Bit12Right(0));
 
         self.circuit = circuit;
         let (sel2, sel1) = circuit.selection();
@@ -65,7 +66,7 @@ impl<'d> BaseControl<'d> {
     /// - V for [`BaseSource::VSource`],
     /// - *ignored* for [`BaseSource::HighZ`] (`value` forced to 0).
     pub fn set_value(&mut self, value: f32) {
-        let value = match self.circuit {
+        let dac_value = match self.circuit {
             BaseSource::HighZ => 0,
             BaseSource::ISource | BaseSource::ISink => {
                 self.circuit.dac_value(util::clamp(value, 0.0, 150.0))
@@ -73,6 +74,8 @@ impl<'d> BaseControl<'d> {
             BaseSource::VSource => self.circuit.dac_value(util::clamp(value, 0.0, 5.0)),
         };
 
-        self.dac.set(Value::Bit12Right(value));
+        defmt::trace!("Setting {=f32} for {:?} (DAC value: {=u16})", value, self.circuit, dac_value);
+
+        self.dac.set(Value::Bit12Right(dac_value));
     }
 }
