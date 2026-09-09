@@ -6,14 +6,9 @@ mod collector_control;
 mod emitter_control;
 
 pub use adc_control::AdcControl;
-pub use base_control::{BaseControl, BaseSource};
-pub use collector_control::{CollectorControl, CollectorSource};
-pub use emitter_control::{EmitterControl, EmitterSource};
-
-/// 1 LSB for the ADC/DAC given in milivolts (mV) for mapping to 3,3V.
-pub const U3V3_1LSB: f32 = 0.805664;
-/// 1 LSB for the ADC/DAC given in milivolts (mV) for mapping to 5V.
-pub const U5V_1LSB: f32 = 1.220703;
+pub use base_control::BaseControl;
+pub use collector_control::CollectorControl;
+pub use emitter_control::EmitterControl;
 
 /// Clamp a value to an interval [`min`, `max`].
 pub fn clamp<T: PartialOrd + Copy>(v: T, min: T, max: T) -> T {

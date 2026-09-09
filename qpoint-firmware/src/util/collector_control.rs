@@ -3,8 +3,9 @@ use embassy_stm32::dac::{DacChannel, Value};
 use embassy_stm32::gpio::{Level, Output, Pin, Speed};
 use embassy_stm32::mode::Blocking;
 
+use qpoint_common::measurement::CollectorSource;
+
 use crate::util;
-use crate::util::U5V_1LSB;
 
 /// Driver for the collector terminal capable of supplying voltage.
 ///
@@ -37,8 +38,8 @@ impl<'d> CollectorControl<'d> {
     pub fn select(&mut self, circuit: CollectorSource) {
         self.circuit = circuit;
         let (sel2, sel1) = circuit.selection();
-        self.sel1.set_level(sel1);
-        self.sel2.set_level(sel2);
+        self.sel1.set_level(sel1.into());
+        self.sel2.set_level(sel2.into());
     }
 
     /// Set the DAC driving voltage in the units of LSB.
@@ -48,58 +49,21 @@ impl<'d> CollectorControl<'d> {
         self.dac.set(Value::Bit12Right(value));
     }
 
-    /// Supply `u` volts (V) to the collector terminal.
+    /// Set the DAC driving voltage to match the desired `value` on the output.
     ///
-    /// The circuit can supply from 0 V to 5 V.
-    pub fn supply_voltage(&mut self, u: f32) {
-        self.select(CollectorSource::VSource);
-
-        let value = self.circuit.dac_value(util::clamp(u, 0.0, 5.0));
-        self.set_dac(value);
-    }
-}
-
-/// Circuit used to drive the collector terminal.
-#[derive(defmt::Format, Clone, Copy, PartialEq, Eq)]
-pub enum CollectorSource {
-    /// High impedance.
+    /// The allowed ranges depend on the currently selected source:
+    /// - [`CollectorSource::VSource`]: `0..=5` V,
+    /// - *others*: value forced to 0.
     ///
-    /// The collector terminal is effectively disconnected (floating).
-    HighZ,
-    /// +5 V.
-    ///
-    /// Connects the collector directly to the 5 V power supply.
-    VCC,
-    /// Voltage source.
-    ///
-    /// Connects the collector terminal to a variable voltage source ([0, 5] V).
-    VSource,
-    /// GND.
-    ///
-    /// Connects the collector directly to ground.
-    GND,
-}
-
-impl CollectorSource {
-    /// Selection pin settings to select the given source in the order: `SEL2, SEL1`.
-    fn selection(&self) -> (Level, Level) {
-        match self {
-            CollectorSource::HighZ => (Level::Low, Level::Low),
-            CollectorSource::VCC => (Level::Low, Level::High),
-            CollectorSource::VSource => (Level::High, Level::Low),
-            CollectorSource::GND => (Level::High, Level::High),
-        }
-    }
-
-    /// DAC setting to drive the base terminal with the given value.
-    ///
-    /// The unit of the value is:
-    /// - V for `VSource`,
-    /// - *ignored* for `HighZ`, `VCC`, `GND` (returns 0).
-    fn dac_value(&self, value: f32) -> u16 {
-        match self {
-            CollectorSource::VSource => libm::roundf((value * 1000.0) / U5V_1LSB) as u16,
+    /// The unit of `value` is:
+    /// - V for [`CollectorSource::VSource`],
+    /// - *ignored* for others (`value` is forced to 0).
+    pub fn set_value(&mut self, value: f32) {
+        let value = match self.circuit {
+            CollectorSource::VSource => self.circuit.dac_value(util::clamp(value, 0.0, 5.0)),
             _ => 0,
-        }
+        };
+
+        self.dac.set(Value::Bit12Right(value));
     }
 }

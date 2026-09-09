@@ -3,8 +3,9 @@ use embassy_stm32::dac::{DacChannel, Value};
 use embassy_stm32::gpio::{Level, Output, Pin, Speed};
 use embassy_stm32::mode::Blocking;
 
+use qpoint_common::measurement::BaseSource;
+
 use crate::util;
-use crate::util::{U3V3_1LSB, U5V_1LSB};
 
 /// Driver for the base terminal capable of sourcing and sinking current, and supplying voltage.
 ///
@@ -40,8 +41,8 @@ impl<'d> BaseControl<'d> {
 
         self.circuit = circuit;
         let (sel2, sel1) = circuit.selection();
-        self.sel1.set_level(sel1);
-        self.sel2.set_level(sel2);
+        self.sel1.set_level(sel1.into());
+        self.sel2.set_level(sel2.into());
     }
 
     /// Set the DAC driving voltage in the units of LSB.
@@ -51,85 +52,27 @@ impl<'d> BaseControl<'d> {
         self.dac.set(Value::Bit12Right(value));
     }
 
-    /// Source `i` microamperes (uA) of current from the base terminal.
+    /// Set the DAC driving voltage to match the desired `value` on the output.
     ///
-    /// The circuit can supply from 0 uA to 150 uA.
-    pub fn source_current(&mut self, i: f32) {
-        self.select(BaseSource::ISource);
-
-        let value = self.circuit.dac_value(util::clamp(i, 0.0, 150.0));
-        self.set_dac(value);
-    }
-
-    /// Sink `i` microamperes (uA) of current into the base terminal.
+    /// The allowed ranges depend on the currently selected source:
+    /// - [`BaseSource::HighZ`]: irrelevant (forced to 0).
+    /// - [`BaseSource::ISource`]: `0..=150` uA,
+    /// - [`BaseSource::ISink`]: `0..=150` uA,
+    /// - [`BaseSource::VSource`]: `0..=5` V,
     ///
-    /// The circuit can sink from 0 uA to 150 uA.
-    pub fn sink_current(&mut self, i: f32) {
-        self.select(BaseSource::ISink);
-
-        let value = self.circuit.dac_value(util::clamp(i, 0.0, 150.0));
-        self.set_dac(value);
-    }
-
-    /// Supply `u` volts (V) at the base terminal through a 15k resistor.
-    ///
-    /// The circuit can supply from 0 V to 5 V.
-    pub fn supply_voltage(&mut self, u: f32) {
-        self.select(BaseSource::VSource);
-
-        let value = self.circuit.dac_value(util::clamp(u, 0.0, 5.0));
-        self.set_dac(value);
-    }
-}
-
-/// Circuit used to drive the base terminal.
-#[derive(defmt::Format, Clone, Copy, PartialEq, Eq)]
-pub enum BaseSource {
-    /// High impedance.
-    ///
-    /// The base terminal is effectively disconnected (floating).
-    HighZ,
-    /// Current source.
-    ///
-    /// Creates a positive voltage at the base terminal, such that the current flowing **out** of this
-    /// circuit is proportional to the setting voltage. Current range: [0, 150] uA.
-    ISource,
-    /// Current sink.
-    ///
-    /// Creates a positive voltage at the base terminal, such that the current flowing **into** this
-    /// circuit is proportional to the setting voltage. Current range: [0, 150] uA.
-    ISink,
-    /// Voltage source.
-    ///
-    /// Connects the base terminal to a variable voltage source ([0, 5] V) through a 15k resistor.
-    VSource,
-}
-
-impl BaseSource {
-    /// Selection pin settings to select the given source in the order: `SEL2, SEL1`.
-    fn selection(&self) -> (Level, Level) {
-        match self {
-            BaseSource::HighZ => (Level::Low, Level::Low),
-            BaseSource::ISource => (Level::Low, Level::High),
-            BaseSource::ISink => (Level::High, Level::Low),
-            BaseSource::VSource => (Level::High, Level::High),
-        }
-    }
-
-    /// DAC setting to drive the base terminal with the given value.
-    ///
-    /// The unit of the value is:
-    /// - uA for `ISource` and `ISink`,
-    /// - V for `VSource`,
-    /// - *ignored* for `HighZ` (returns 0).
-    // - ISource | ISink: I [A] = U [V] / 22k => U [V] = I [A] * 22k => U [mV] = I [uA] / 22
-    fn dac_value(&self, value: f32) -> u16 {
-        match self {
+    /// The unit of `value` is:
+    /// - uA for [`BaseSource::ISource`] and [`BaseSource::ISink`],
+    /// - V for [`BaseSource::VSource`],
+    /// - *ignored* for [`BaseSource::HighZ`] (`value` forced to 0).
+    pub fn set_value(&mut self, value: f32) {
+        let value = match self.circuit {
             BaseSource::HighZ => 0,
             BaseSource::ISource | BaseSource::ISink => {
-                libm::roundf((value * 22.0) / U3V3_1LSB) as u16
+                self.circuit.dac_value(util::clamp(value, 0.0, 150.0))
             }
-            BaseSource::VSource => libm::roundf((value * 1000.0) / U5V_1LSB) as u16,
-        }
+            BaseSource::VSource => self.circuit.dac_value(util::clamp(value, 0.0, 5.0)),
+        };
+
+        self.dac.set(Value::Bit12Right(value));
     }
 }
