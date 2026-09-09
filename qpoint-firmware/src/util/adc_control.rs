@@ -4,7 +4,7 @@ use embassy_stm32::adc::{
 use embassy_stm32::pac::adc::Adc as AdcRegs;
 use embassy_stm32::{Peri, adc, dma, interrupt};
 
-use crate::util::{U3V3_1LSB, U5V_1LSB};
+use qpoint_common::measurement::{U3V3_1LSB, U5V_1LSB, MeasurementResult};
 
 /// Driver for measuring the base voltage and collector current.
 pub struct AdcControl<'d, T, D>
@@ -78,13 +78,4 @@ where
             collector_current,
         }
     }
-}
-
-/// ADC driver measurement results, converted to real world units.
-#[derive(defmt::Format)]
-pub struct MeasurementResult {
-    /// Base voltage in milivolts [mV].
-    pub base_voltage: f32,
-    /// Collector current in miliamperes [mA].
-    pub collector_current: f32,
 }

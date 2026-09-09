@@ -1,0 +1,14 @@
+[package]
+name = "qpoint-common"
+version = "0.1.0-dev.0"
+edition = "2024"
+
+[dependencies]
+defmt = { version = "1.1", optional = true }
+libm = "0.2"
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+thiserror = { version = "2.0", default-features = false }
+
+[features]
+defmt = ["dep:defmt"]
+std = ["serde/std", "thiserror/std"]

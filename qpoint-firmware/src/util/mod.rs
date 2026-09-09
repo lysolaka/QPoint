@@ -4,16 +4,32 @@ mod adc_control;
 mod base_control;
 mod collector_control;
 mod emitter_control;
+pub mod sync;
 
 pub use adc_control::AdcControl;
-pub use base_control::{BaseControl, BaseSource};
-pub use collector_control::{CollectorControl, CollectorSource};
-pub use emitter_control::{EmitterControl, EmitterSource};
+pub use base_control::BaseControl;
+pub use collector_control::CollectorControl;
+pub use emitter_control::EmitterControl;
 
-/// 1 LSB for the ADC/DAC given in milivolts (mV) for mapping to 3,3V.
-pub const U3V3_1LSB: f32 = 0.805664;
-/// 1 LSB for the ADC/DAC given in milivolts (mV) for mapping to 5V.
-pub const U5V_1LSB: f32 = 1.220703;
+use qpoint_common::Command;
+
+/// Composite type for a [`Command`] to indicate its source.
+#[derive(defmt::Format)]
+pub struct MeasurementCommand {
+    pub cmd: Command,
+    pub source: CommandSource,
+}
+
+/// Place where the measurement command is coming from.
+#[derive(defmt::Format)]
+pub enum CommandSource {
+    /// The command was sent by the on-board UI, the measurement result should be sent to its
+    /// runner.
+    UI,
+    /// The command was sent by a remote application, the measurement result should be sent to the
+    /// remote TX channel.
+    Remote,
+}
 
 /// Clamp a value to an interval [`min`, `max`].
 pub fn clamp<T: PartialOrd + Copy>(v: T, min: T, max: T) -> T {
