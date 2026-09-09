@@ -36,6 +36,9 @@ impl<'d> CollectorControl<'d> {
 
     /// Select the circuit to drive the collector terminal.
     pub fn select(&mut self, circuit: CollectorSource) {
+        // for the illusion of "safety"
+        self.set_dac(0);
+
         self.circuit = circuit;
         let (sel2, sel1) = circuit.selection();
         self.sel1.set_level(sel1.into());
