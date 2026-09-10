@@ -4,7 +4,7 @@ use embassy_stm32::adc::{
 use embassy_stm32::pac::adc::Adc as AdcRegs;
 use embassy_stm32::{Peri, adc, dma, interrupt};
 
-use qpoint_common::measurement::{U3V3_1LSB, U5V_1LSB, MeasurementResult};
+use qpoint_common::measurement::{MeasurementResult, U3V3_1LSB, U5V_1LSB};
 
 /// Driver for measuring the base voltage and collector current.
 pub struct AdcControl<'d, T, D>

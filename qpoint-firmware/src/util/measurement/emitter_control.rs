@@ -14,10 +14,7 @@ pub struct EmitterControl<'d> {
 
 impl<'d> EmitterControl<'d> {
     /// Construct the emitter terminal driver.
-    pub fn new(
-        sel1: Peri<'d, impl Pin>,
-        sel2: Peri<'d, impl Pin>,
-    ) -> Self {
+    pub fn new(sel1: Peri<'d, impl Pin>, sel2: Peri<'d, impl Pin>) -> Self {
         Self {
             sel1: Output::new(sel1, Level::Low, Speed::Low),
             sel2: Output::new(sel2, Level::Low, Speed::Low),
