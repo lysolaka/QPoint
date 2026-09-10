@@ -9,6 +9,7 @@ use static_cell::{ConstStaticCell, StaticCell};
 
 use crate::UsbResources;
 
+mod receiver;
 mod sender;
 
 static CONFIG_DESCRIPTOR_BUF: ConstStaticCell<[u8; 256]> = ConstStaticCell::new([0; 256]);
@@ -55,9 +56,17 @@ async fn runner(mut usb: UsbDevice<'static, Driver<'static, USB>>) -> ! {
 }
 
 #[embassy_executor::task]
-async fn serial_receiver(receiver: BufferedReceiver<'static, Driver<'static, USB>>) -> ! {
+async fn serial_receiver(mut receiver: BufferedReceiver<'static, Driver<'static, USB>>) -> ! {
     defmt::info!("CDC ACM Receiver: OK!");
-    defmt::todo!()
+
+    loop {
+        receiver.wait_connection().await;
+        defmt::info!("CDC ACM RX connected");
+        match receiver::run(&mut receiver).await {
+            Err(e) => defmt::error!("{:?}", defmt::Display2Format(&e)),
+            _ => defmt::unreachable!(),
+        }
+    }
 }
 
 #[embassy_executor::task]
@@ -68,9 +77,7 @@ async fn serial_sender(mut sender: Sender<'static, Driver<'static, USB>>) -> ! {
         sender.wait_connection().await;
         defmt::info!("CDC ACM TX connected");
         match sender::run(&mut sender).await {
-            Err(e) => {
-                defmt::error!("{:?}", defmt::Display2Format(&e));
-            }
+            Err(e) => defmt::error!("{:?}", defmt::Display2Format(&e)),
             _ => defmt::unreachable!(),
         }
     }
