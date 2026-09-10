@@ -21,7 +21,7 @@ pub async fn runner(r: MeasurementResources) -> ! {
 
     let mut adc_control = AdcControl::new(r.adc, r.dma, r.base_adc, r.collector_adc);
 
-    defmt::info!("Measurement runner: OK");
+    defmt::info!("Measurement runner: OK!");
 
     loop {
         let command = MEASUREMENT_CMD_Q.receive().await;

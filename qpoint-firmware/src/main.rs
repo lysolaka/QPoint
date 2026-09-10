@@ -9,12 +9,19 @@ use embassy_executor::Spawner;
 use embassy_stm32::{Peri, peripherals};
 use embassy_stm32::{dma, usb};
 
-mod config;
-mod measurement;
 mod communication;
+mod config;
+mod led;
+mod measurement;
 pub mod util;
 
 assign_resources::assign_resources! {
+    led: LedResources {
+        r: PB6,
+        g: PB7,
+        b: PB8,
+        tim: TIM4,
+    },
     measurement: MeasurementResources {
         dac: DAC1,
         adc: ADC1,
@@ -47,12 +54,14 @@ async fn main(spawner: Spawner) {
     let p = embassy_stm32::init(config::hal_config());
     let r = split_resources!(p);
 
-    defmt::info!("Startup: OK");
+    defmt::info!("Startup: OK!");
     defmt::debug!("Spawning tasks...");
 
+    spawner.spawn(defmt::unwrap!(led::driver(r.led)));
     spawner.spawn(defmt::unwrap!(measurement::runner(r.measurement)));
+
     communication::start(spawner, r.usb);
 
-    defmt::info!("Tasks spawned: OK");
+    defmt::info!("Tasks spawned: OK!");
     defmt::debug!("Yeilding to the executor...");
 }
