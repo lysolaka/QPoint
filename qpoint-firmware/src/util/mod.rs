@@ -1,5 +1,6 @@
 //! Utility functions, structures and constants for use by the program.
 
+pub mod com;
 pub mod measurement;
 pub mod sync;
 

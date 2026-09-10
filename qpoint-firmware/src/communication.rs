@@ -5,10 +5,11 @@ use embassy_stm32::usb::Driver;
 use embassy_usb::class::cdc_acm::{BufferedReceiver, CdcAcmClass, Sender, State};
 use embassy_usb::{Builder, Config, UsbDevice};
 
-use embedded_io_async::Read;
 use static_cell::{ConstStaticCell, StaticCell};
 
 use crate::UsbResources;
+
+mod sender;
 
 static CONFIG_DESCRIPTOR_BUF: ConstStaticCell<[u8; 256]> = ConstStaticCell::new([0; 256]);
 static BOS_DESCRIPTOR_BUF: ConstStaticCell<[u8; 256]> = ConstStaticCell::new([0; 256]);
@@ -43,8 +44,8 @@ pub fn start(spawner: Spawner, r: UsbResources) {
     let usb = builder.build();
 
     spawner.spawn(defmt::unwrap!(runner(usb)));
-    spawner.spawn(defmt::unwrap!(cdc_acm_rx(receiver)));
-    spawner.spawn(defmt::unwrap!(cdc_acm_tx(sender)));
+    spawner.spawn(defmt::unwrap!(serial_receiver(receiver)));
+    spawner.spawn(defmt::unwrap!(serial_sender(sender)));
 }
 
 #[embassy_executor::task]
@@ -54,13 +55,23 @@ async fn runner(mut usb: UsbDevice<'static, Driver<'static, USB>>) -> ! {
 }
 
 #[embassy_executor::task]
-async fn cdc_acm_rx(rx: BufferedReceiver<'static, Driver<'static, USB>>) -> ! {
+async fn serial_receiver(receiver: BufferedReceiver<'static, Driver<'static, USB>>) -> ! {
     defmt::info!("CDC ACM Receiver: OK!");
     defmt::todo!()
 }
 
 #[embassy_executor::task]
-async fn cdc_acm_tx(tx: Sender<'static, Driver<'static, USB>>) -> ! {
-    defmt::info!("CDC ACM Transmitter: OK!");
-    defmt::todo!()
+async fn serial_sender(mut sender: Sender<'static, Driver<'static, USB>>) -> ! {
+    defmt::info!("CDC ACM Sender: OK!");
+
+    loop {
+        sender.wait_connection().await;
+        defmt::info!("CDC ACM TX connected");
+        match sender::run(&mut sender).await {
+            Err(e) => {
+                defmt::error!("{:?}", defmt::Display2Format(&e));
+            }
+            _ => defmt::unreachable!(),
+        }
+    }
 }
