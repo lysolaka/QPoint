@@ -7,9 +7,11 @@ use panic_probe as _;
 use embassy_executor::Spawner;
 
 use embassy_stm32::{Peri, peripherals};
+use embassy_stm32::{dma, usb};
 
 mod config;
 mod measurement;
+mod communication;
 pub mod util;
 
 assign_resources::assign_resources! {
@@ -28,10 +30,16 @@ assign_resources::assign_resources! {
         emitter_sel1: PB12,
         emitter_sel2: PB11,
     },
+    usb: UsbResources {
+        usb: USB,
+        dp: PA12,
+        dm: PA11,
+    }
 }
 
 embassy_stm32::bind_interrupts!(struct Interrupts {
-    DMA1_CH4_7_DMA2_CH1_5_DMAMUX1_OVR => embassy_stm32::dma::InterruptHandler<peripherals::DMA2_CH1>;
+    DMA1_CH4_7_DMA2_CH1_5_DMAMUX1_OVR => dma::InterruptHandler<peripherals::DMA2_CH1>;
+    USB_UCPD1_2 => usb::InterruptHandler<peripherals::USB>;
 });
 
 #[embassy_executor::main]
@@ -43,6 +51,7 @@ async fn main(spawner: Spawner) {
     defmt::debug!("Spawning tasks...");
 
     spawner.spawn(defmt::unwrap!(measurement::runner(r.measurement)));
+    communication::start(spawner, r.usb);
 
     defmt::info!("Tasks spawned: OK");
     defmt::debug!("Yeilding to the executor...");
