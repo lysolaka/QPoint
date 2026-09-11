@@ -1,0 +1,12 @@
+[package]
+name = "qpoint-executor"
+version = "0.1.0-dev.1"
+edition = "2024"
+
+[dependencies]
+iced = "0.14"
+native-dialog = "0.9"
+postcard = { version = "1.1", features = ["use-std"] }
+serialport = "4.10"
+
+qpoint-common = { path = "../qpoint-common", features = ["std"] }
