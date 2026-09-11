@@ -15,6 +15,9 @@ mod led;
 mod measurement;
 pub mod util;
 
+use crate::util::color;
+use crate::util::sync::RGB_LED_S;
+
 assign_resources::assign_resources! {
     led: LedResources {
         r: PB6,
@@ -61,6 +64,8 @@ async fn main(spawner: Spawner) {
     spawner.spawn(defmt::unwrap!(measurement::runner(r.measurement)));
 
     communication::start(spawner, r.usb);
+
+    RGB_LED_S.signal(color::OK);
 
     defmt::info!("Tasks spawned: OK!");
     defmt::debug!("Yeilding to the executor...");

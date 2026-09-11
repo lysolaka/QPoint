@@ -8,6 +8,8 @@ use embassy_usb::{Builder, Config, UsbDevice};
 use static_cell::{ConstStaticCell, StaticCell};
 
 use crate::UsbResources;
+use crate::util::color;
+use crate::util::sync::RGB_LED_S;
 
 mod receiver;
 mod sender;
@@ -66,6 +68,7 @@ async fn serial_receiver(mut receiver: BufferedReceiver<'static, Driver<'static,
             Err(e) => defmt::error!("{:?}", defmt::Display2Format(&e)),
             _ => defmt::unreachable!(),
         }
+        RGB_LED_S.signal(color::ERR);
     }
 }
 
@@ -80,5 +83,6 @@ async fn serial_sender(mut sender: Sender<'static, Driver<'static, USB>>) -> ! {
             Err(e) => defmt::error!("{:?}", defmt::Display2Format(&e)),
             _ => defmt::unreachable!(),
         }
+        RGB_LED_S.signal(color::ERR);
     }
 }
