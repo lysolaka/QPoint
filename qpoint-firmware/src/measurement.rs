@@ -1,13 +1,15 @@
 //! Analog measurements runner.
 
 use embassy_stm32::dac::Dac;
+use embassy_time::Timer;
 
-use qpoint_common::Command;
+use qpoint_common::{Command, Response};
 
 use crate::MeasurementResources;
 use crate::util::CommandSource;
 use crate::util::measurement::{AdcControl, BaseControl, CollectorControl, EmitterControl};
 use crate::util::sync::MEASUREMENT_CMD_Q;
+use crate::util::sync::RESPONSE_TX_Q;
 
 #[embassy_executor::task]
 pub async fn runner(r: MeasurementResources) -> ! {
@@ -26,43 +28,58 @@ pub async fn runner(r: MeasurementResources) -> ! {
     loop {
         let command = MEASUREMENT_CMD_Q.receive().await;
         defmt::debug!("Running measurement command: {:?}", &command);
-        match command.cmd {
-            Command::BaseSelect(source) => base_control.select(source),
+
+        let response = match command.cmd {
+            Command::BaseSelect(source) => {
+                base_control.select(source);
+                Response::Ok
+            }
             Command::BaseSet { value, measure } => {
                 base_control.set_value(value);
 
+                // give some time to settle
+                Timer::after_millis(50).await;
+
                 if measure {
                     // this `crate::Interrupts` looks so ugly, but it is what it is
                     let result = adc_control.measure(crate::Interrupts).await;
-
-                    defmt::debug!("Measurement done, sending back the result");
                     defmt::debug!("Measurement result: {:?}", &result);
-                    // TODO: send back the result
-                    match command.source {
-                        CommandSource::UI => (),
-                        CommandSource::Remote => (),
-                    }
+                    Response::Measurement(result)
+                } else {
+                    Response::Ok
                 }
             }
-            Command::CollectorSelect(source) => collector_control.select(source),
+            Command::CollectorSelect(source) => {
+                collector_control.select(source);
+                Response::Ok
+            }
             Command::CollectorSet { value, measure } => {
                 collector_control.set_value(value);
 
+                // give some time to settle
+                Timer::after_millis(50).await;
+
                 if measure {
                     // this `crate::Interrupts` looks so ugly, but it is what it is
                     let result = adc_control.measure(crate::Interrupts).await;
-
-                    defmt::debug!("Measurement done, sending back the result");
                     defmt::debug!("Measurement result: {:?}", &result);
-                    // TODO: send back the result
-                    match command.source {
-                        CommandSource::UI => (),
-                        CommandSource::Remote => (),
-                    }
+                    Response::Measurement(result)
+                } else {
+                    Response::Ok
                 }
             }
-            Command::EmitterSelect(source) => emitter_control.select(source),
+            Command::EmitterSelect(source) => {
+                emitter_control.select(source);
+                Response::Ok
+            }
             _ => defmt::panic!("Unexpected measurement command."),
+        };
+
+        defmt::debug!("Sending back response: {:?}", &response);
+        // TODO: send back the response to the UI
+        match command.source {
+            CommandSource::UI => defmt::todo!(),
+            CommandSource::Remote => RESPONSE_TX_Q.send(response).await,
         }
     }
 }
