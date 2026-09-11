@@ -146,3 +146,38 @@ pub struct MeasurementResult {
     /// Collector current in miliamperes [mA].
     pub collector_current: f32,
 }
+
+#[cfg(feature = "std")]
+impl std::fmt::Display for BaseSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            BaseSource::HighZ => "High impedance",
+            BaseSource::ISource => "Current source",
+            BaseSource::ISink => "Current sink",
+            BaseSource::VSource => "Voltage source",
+        })
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::fmt::Display for CollectorSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            CollectorSource::HighZ => "High impedance",
+            CollectorSource::VCC => "+5 V",
+            CollectorSource::VSource => "Voltage source",
+            CollectorSource::GND => "Ground",
+        })
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::fmt::Display for EmitterSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            EmitterSource::HighZ => "High impedance",
+            EmitterSource::VCC => "+5 V",
+            EmitterSource::GND => "Ground",
+        })
+    }
+}
