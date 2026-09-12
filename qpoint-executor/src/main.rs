@@ -9,7 +9,7 @@ use native_dialog::{DialogBuilder, MessageLevel};
 use qpoint_common::Command;
 use qpoint_common::measurement::{BaseSource, CollectorSource, EmitterSource};
 
-// mod serial;
+mod serial;
 
 fn main() -> iced::Result {
     iced::application(State::default, State::update, State::view)
@@ -19,6 +19,18 @@ fn main() -> iced::Result {
         })
         .title("QPoint Executor")
         .run()
+}
+
+#[derive(thiserror::Error, Debug)]
+enum Error {
+    #[error("{0}")]
+    SerialPort(#[from] serialport::Error),
+    #[error("{0}")]
+    Serialization(#[from] postcard::Error),
+    #[error("{0}")]
+    Io(#[from] std::io::Error),
+    #[error("The device is not found")]
+    NotFound,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -92,7 +104,17 @@ impl State {
     fn update(&mut self, message: Message) {
         match message {
             Message::ExecutePressed => match self.selected_command.into_command(&self) {
-                Ok(c) => todo!(),
+                Ok(c) => {
+                    if let Err(e) = serial::execute(c) {
+                     DialogBuilder::message()
+                        .set_level(MessageLevel::Error)
+                        .set_title("QPoint Executor")
+                        .set_text(format!("Error: {}", e))
+                        .alert()
+                        .show()
+                        .unwrap();
+                    }
+                },
                 Err(e) => {
                     DialogBuilder::message()
                         .set_level(MessageLevel::Error)

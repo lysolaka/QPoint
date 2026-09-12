@@ -8,5 +8,6 @@ iced = "0.14"
 native-dialog = "0.9"
 postcard = { version = "1.1", features = ["use-std"] }
 serialport = "4.10"
+thiserror = "2.0"
 
 qpoint-common = { path = "../qpoint-common", features = ["std"] }

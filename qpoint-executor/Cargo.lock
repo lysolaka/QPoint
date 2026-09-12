@@ -2470,6 +2470,7 @@ dependencies = [
  "postcard",
  "qpoint-common",
  "serialport",
+ "thiserror 2.0.20",
 ]
 
 [[package]]
