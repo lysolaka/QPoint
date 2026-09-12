@@ -18,6 +18,10 @@ pub enum Command {
     Attach,
     /// Return control to the basic UI.
     Detach,
+    /// Set an RGB LED colour.
+    ///
+    /// The format is `(r, g, b)`
+    LedSet(u8, u8, u8),
     /// Select a base source.
     BaseSelect(BaseSource),
     /// Set a `value` on the base terminal.

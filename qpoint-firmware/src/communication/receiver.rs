@@ -4,11 +4,11 @@ use embassy_stm32::peripherals::USB;
 use embassy_stm32::usb::Driver;
 use embassy_usb::class::cdc_acm::BufferedReceiver;
 
-use qpoint_common::Command;
+use qpoint_common::{Command, Response};
 
 use crate::util::com;
 use crate::util::com::FramedReceiver;
-use crate::util::sync::MEASUREMENT_CMD_Q;
+use crate::util::sync::{MEASUREMENT_CMD_Q, RESPONSE_TX_Q, RGB_LED_S};
 use crate::util::{CommandSource, MeasurementCommand};
 
 pub async fn run<'d>(
@@ -26,6 +26,10 @@ pub async fn run<'d>(
         match cmd {
             Command::Attach => defmt::todo!(),
             Command::Detach => defmt::todo!(),
+            Command::LedSet(r, g, b) => {
+                RGB_LED_S.signal((r, g, b));
+                RESPONSE_TX_Q.send(Response::Ok).await;
+            }
             cmd => {
                 let cmd = MeasurementCommand {
                     cmd,

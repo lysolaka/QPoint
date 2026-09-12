@@ -23,7 +23,7 @@ pub async fn driver(r: LedResources) -> ! {
         CountingMode::EdgeAlignedUp,
     );
 
-    defmt::info!("max_duty_cycle: {=u32}", &led.max_duty_cycle());
+    defmt::debug!("RGB LED max_duty_cycle: {=u32}", &led.max_duty_cycle());
 
     led.ch1().set_polarity(OutputPolarity::ActiveLow);
     led.ch2().set_polarity(OutputPolarity::ActiveLow);
@@ -36,6 +36,12 @@ pub async fn driver(r: LedResources) -> ! {
 
     loop {
         let (r, g, b) = RGB_LED_S.wait().await;
+        defmt::debug!(
+            "Setting LED colour to: ({=u8:02x}, {=u8:02x}, {=u8:02x})",
+            r,
+            g,
+            b
+        );
         led.ch1().set_duty_cycle_fraction(r as u32, 255);
         led.ch2().set_duty_cycle_fraction(g as u32, 255);
         led.ch3().set_duty_cycle_fraction(b as u32, 255);

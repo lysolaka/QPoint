@@ -1,5 +1,3 @@
-use std::num::ParseFloatError;
-
 use iced::Element;
 use iced::widget::{button, checkbox, column, pick_list, radio, row, space, text, text_input};
 use iced::{Alignment, Length, Size};
@@ -14,7 +12,7 @@ mod serial;
 fn main() -> iced::Result {
     iced::application(State::default, State::update, State::view)
         .window(iced::window::Settings {
-            size: Size::new(512.0, 480.0),
+            size: Size::new(512.0, 490.0),
             ..Default::default()
         })
         .title("QPoint Executor")
@@ -29,6 +27,10 @@ enum Error {
     Serialization(#[from] postcard::Error),
     #[error("{0}")]
     Io(#[from] std::io::Error),
+    #[error("{0}")]
+    ParseFloat(#[from] std::num::ParseFloatError),
+    #[error("{0}")]
+    ParseInt(#[from] std::num::ParseIntError),
     #[error("The device is not found")]
     NotFound,
 }
@@ -37,6 +39,7 @@ enum Error {
 enum CommandFlat {
     Attach,
     Detach,
+    LedSet,
     BaseSelect,
     BaseSet,
     CollectorSelect,
@@ -45,10 +48,15 @@ enum CommandFlat {
 }
 
 impl CommandFlat {
-    fn into_command(&self, values: &State) -> Result<Command, ParseFloatError> {
+    fn into_command(&self, values: &State) -> Result<Command, crate::Error> {
         let cmd = match self {
             CommandFlat::Attach => Command::Attach,
             CommandFlat::Detach => Command::Detach,
+            CommandFlat::LedSet => Command::LedSet(
+                u8::from_str_radix(&values.led_r, 16)?,
+                u8::from_str_radix(&values.led_g, 16)?,
+                u8::from_str_radix(&values.led_b, 16)?,
+            ),
             CommandFlat::BaseSelect => Command::BaseSelect(values.base_source.expect("never None")),
             CommandFlat::BaseSet => {
                 let value = values.base_value.parse()?;
@@ -80,6 +88,9 @@ impl CommandFlat {
 enum Message {
     ExecutePressed,
     CommandSelected(CommandFlat),
+    LedRChanged(String),
+    LedGChanged(String),
+    LedBChanged(String),
     BaseSourceSelected(BaseSource),
     BaseValueChanged(String),
     BaseMeasureToggled(bool),
@@ -90,6 +101,9 @@ enum Message {
 }
 
 struct State {
+    led_r: String,
+    led_g: String,
+    led_b: String,
     base_source: Option<BaseSource>,
     base_value: String,
     base_measure: bool,
@@ -103,29 +117,28 @@ struct State {
 impl State {
     fn update(&mut self, message: Message) {
         match message {
-            Message::ExecutePressed => match self.selected_command.into_command(&self) {
-                Ok(c) => {
-                    if let Err(e) = serial::execute(c) {
-                     DialogBuilder::message()
+            Message::ExecutePressed => {
+                if let Err(e) = self
+                    .selected_command
+                    .into_command(&self)
+                    .inspect(|c| eprintln!("Executing: {:?}", c))
+                    .map(|c| serial::execute(c))
+                    .flatten()
+                    .inspect(|r| eprintln!("Response: {:?}", r))
+                {
+                    DialogBuilder::message()
                         .set_level(MessageLevel::Error)
                         .set_title("QPoint Executor")
                         .set_text(format!("Error: {}", e))
                         .alert()
                         .show()
                         .unwrap();
-                    }
-                },
-                Err(e) => {
-                    DialogBuilder::message()
-                        .set_level(MessageLevel::Error)
-                        .set_title("QPoint Executor")
-                        .set_text(format!("Error parsing the value: {}", e))
-                        .alert()
-                        .show()
-                        .unwrap();
                 }
-            },
+            }
             Message::CommandSelected(command) => self.selected_command = command,
+            Message::LedRChanged(r) => self.led_r = r,
+            Message::LedGChanged(g) => self.led_g = g,
+            Message::LedBChanged(b) => self.led_b = b,
             Message::BaseSourceSelected(base_source) => self.base_source = Some(base_source),
             Message::BaseValueChanged(v) => self.base_value = v,
             Message::BaseMeasureToggled(base_measure) => self.base_measure = base_measure,
@@ -153,6 +166,13 @@ impl State {
         let radio_detach = radio(
             "Detach",
             CommandFlat::Detach,
+            Some(self.selected_command),
+            Message::CommandSelected,
+        );
+
+        let radio_led_set = radio(
+            "LED set",
+            CommandFlat::LedSet,
             Some(self.selected_command),
             Message::CommandSelected,
         );
@@ -191,6 +211,25 @@ impl State {
             Some(self.selected_command),
             Message::CommandSelected,
         );
+
+        let led_set = row![
+            radio_led_set,
+            space().width(63),
+            text("R:"),
+            text_input("R", &self.led_r)
+                .on_input(Message::LedRChanged)
+                .width(Length::Fixed(48.0)),
+            text("G:"),
+            text_input("G", &self.led_g)
+                .on_input(Message::LedGChanged)
+                .width(Length::Fixed(48.0)),
+            text("B:"),
+            text_input("B", &self.led_b)
+                .on_input(Message::LedBChanged)
+                .width(Length::Fixed(48.0))
+        ]
+        .spacing(12)
+        .align_y(Alignment::Center);
 
         let base_select = row![
             radio_base_select,
@@ -284,6 +323,8 @@ impl State {
             radio_attach,
             space().height(3),
             radio_detach,
+            space().height(3),
+            led_set,
             space().height(8),
             base_select,
             base_set,
@@ -306,6 +347,9 @@ impl State {
 impl Default for State {
     fn default() -> Self {
         Self {
+            led_r: "0".to_string(),
+            led_g: "0".to_string(),
+            led_b: "0".to_string(),
             base_source: Some(BaseSource::HighZ),
             base_value: "0".to_string(),
             base_measure: false,

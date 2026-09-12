@@ -6,8 +6,6 @@ use serialport::SerialPortType;
 use qpoint_common::{Command, Response};
 
 pub fn execute(cmd: Command) -> Result<Response, crate::Error> {
-                    eprintln!("Executing: {:?}", cmd);
-
     let device = serialport::available_ports()?
         .into_iter()
         .find(|port| {
@@ -36,6 +34,5 @@ pub fn execute(cmd: Command) -> Result<Response, crate::Error> {
     eprintln!("Read: {:02x?}", &response);
 
     let response = postcard::from_bytes_cobs(&mut response)?;
-    eprintln!("Response: {:?}", response);
     Ok(response)
 }
