@@ -1,3 +1,5 @@
+//! RGB LED driver.
+
 use embassy_stm32::gpio::OutputType;
 use embassy_stm32::time::Hertz;
 use embassy_stm32::timer::low_level::{CountingMode, OutputPolarity};

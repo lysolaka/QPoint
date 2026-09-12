@@ -7,12 +7,13 @@ use panic_probe as _;
 use embassy_executor::Spawner;
 
 use embassy_stm32::{Peri, peripherals};
-use embassy_stm32::{dma, usb};
+use embassy_stm32::{dma, exti, usb};
 
 mod communication;
 mod config;
 mod led;
 mod measurement;
+mod ui;
 pub mod util;
 
 use crate::util::color;
@@ -40,6 +41,12 @@ assign_resources::assign_resources! {
         emitter_sel1: PB12,
         emitter_sel2: PB11,
     },
+    ui: UiResources {
+        start_pin: PB5,
+        start_exti: EXTI5,
+        select_pin: PB9,
+        select_exti: EXTI9,
+    }
     usb: UsbResources {
         usb: USB,
         dp: PA12,
@@ -49,6 +56,7 @@ assign_resources::assign_resources! {
 
 embassy_stm32::bind_interrupts!(struct Interrupts {
     DMA1_CH4_7_DMA2_CH1_5_DMAMUX1_OVR => dma::InterruptHandler<peripherals::DMA2_CH1>;
+    EXTI4_15 => exti::InterruptHandler<embassy_stm32::interrupt::typelevel::EXTI4_15>;
     USB_UCPD1_2 => usb::InterruptHandler<peripherals::USB>;
 });
 
@@ -61,6 +69,7 @@ async fn main(spawner: Spawner) {
     defmt::debug!("Spawning tasks...");
 
     spawner.spawn(defmt::unwrap!(led::driver(r.led)));
+    spawner.spawn(defmt::unwrap!(ui::driver(r.ui)));
     spawner.spawn(defmt::unwrap!(measurement::runner(r.measurement)));
 
     communication::start(spawner, r.usb);

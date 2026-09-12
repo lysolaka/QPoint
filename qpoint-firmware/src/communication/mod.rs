@@ -1,3 +1,5 @@
+//! USB communication driver.
+
 use embassy_executor::Spawner;
 
 use embassy_stm32::peripherals::USB;

@@ -2,11 +2,15 @@
 
 use embassy_sync::blocking_mutex::raw::ThreadModeRawMutex as MutexT;
 use embassy_sync::channel::Channel;
+use embassy_sync::mutex::Mutex;
 use embassy_sync::signal::Signal;
 
 use qpoint_common::Response;
 
 use crate::util::MeasurementCommand;
+
+/// Is a PC application attached.
+pub static ATTACHED_M: Mutex<MutexT, bool> = Mutex::new(false);
 
 /// Measurement commands queue.
 pub static MEASUREMENT_CMD_Q: Channel<MutexT, MeasurementCommand, 4> = Channel::new();
