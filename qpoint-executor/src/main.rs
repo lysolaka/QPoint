@@ -1,9 +1,15 @@
+use std::num::ParseFloatError;
+
 use iced::Element;
 use iced::widget::{button, checkbox, column, pick_list, radio, row, space, text, text_input};
 use iced::{Alignment, Length, Size};
 
+use native_dialog::{DialogBuilder, MessageLevel};
+
 use qpoint_common::Command;
 use qpoint_common::measurement::{BaseSource, CollectorSource, EmitterSource};
+
+// mod serial;
 
 fn main() -> iced::Result {
     iced::application(State::default, State::update, State::view)
@@ -27,13 +33,13 @@ enum CommandFlat {
 }
 
 impl CommandFlat {
-    fn into_command(&self, values: &State) -> Command {
-        match self {
+    fn into_command(&self, values: &State) -> Result<Command, ParseFloatError> {
+        let cmd = match self {
             CommandFlat::Attach => Command::Attach,
             CommandFlat::Detach => Command::Detach,
             CommandFlat::BaseSelect => Command::BaseSelect(values.base_source.expect("never None")),
             CommandFlat::BaseSet => {
-                let value = values.base_value.parse().unwrap();
+                let value = values.base_value.parse()?;
                 Command::BaseSet {
                     value,
                     measure: values.base_measure,
@@ -43,7 +49,7 @@ impl CommandFlat {
                 Command::CollectorSelect(values.collector_source.expect("never None"))
             }
             CommandFlat::CollectorSet => {
-                let value = values.collector_value.parse().unwrap();
+                let value = values.collector_value.parse()?;
                 Command::CollectorSet {
                     value,
                     measure: values.collector_measure,
@@ -52,7 +58,9 @@ impl CommandFlat {
             CommandFlat::EmitterSelect => {
                 Command::EmitterSelect(values.emitter_source.expect("never None"))
             }
-        }
+        };
+
+        Ok(cmd)
     }
 }
 
@@ -77,17 +85,24 @@ struct State {
     collector_value: String,
     collector_measure: bool,
     emitter_source: Option<EmitterSource>,
-
     selected_command: CommandFlat,
 }
 
 impl State {
     fn update(&mut self, message: Message) {
         match message {
-            Message::ExecutePressed => {
-                let cmd = self.selected_command.into_command(&self);
-                eprintln!("Execute: {:#?}", cmd);
-            }
+            Message::ExecutePressed => match self.selected_command.into_command(&self) {
+                Ok(c) => todo!(),
+                Err(e) => {
+                    DialogBuilder::message()
+                        .set_level(MessageLevel::Error)
+                        .set_title("QPoint Executor")
+                        .set_text(format!("Error parsing the value: {}", e))
+                        .alert()
+                        .show()
+                        .unwrap();
+                }
+            },
             Message::CommandSelected(command) => self.selected_command = command,
             Message::BaseSourceSelected(base_source) => self.base_source = Some(base_source),
             Message::BaseValueChanged(v) => self.base_value = v,
