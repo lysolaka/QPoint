@@ -9,6 +9,9 @@ use oled_async::displays::sh1106::Sh1106_128_64;
 use oled_async::prelude::*;
 
 use crate::DisplayResources;
+use crate::util::color;
+use crate::util::display;
+use crate::util::sync::RGB_LED_S;
 
 #[embassy_executor::task]
 pub async fn driver(r: DisplayResources) -> ! {
@@ -35,6 +38,7 @@ pub async fn driver(r: DisplayResources) -> ! {
 
     let init: Result<(), DisplayError> = async {
         display.init().await?;
+        display::clear(&mut display)?;
         display.flush().await?;
         Ok(())
     }
@@ -43,6 +47,7 @@ pub async fn driver(r: DisplayResources) -> ! {
     if let Err(e) = init {
         defmt::error!("Display driver: {}", e);
         defmt::warn!("The display driver is now useless");
+        RGB_LED_S.signal(color::WARN);
         // this is needed because this function (task) never returns
         loop {
             embassy_futures::yield_now().await;

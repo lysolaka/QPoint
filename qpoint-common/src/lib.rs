@@ -57,6 +57,31 @@ pub enum Command {
     CollectorSet { value: f32, measure: bool },
     /// Select an emitter source.
     EmitterSelect(EmitterSource),
+    /// Display the `value` of parameter `param` on the screen.
+    DisplayParam { param: Parameter, value: f32 },
+}
+
+/// Hybrid model parameters names.
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(not(feature = "defmt"), derive(Debug))]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub enum Parameter {
+    Hie,
+    Hre,
+    Hfe,
+    Hoe,
+}
+
+impl Parameter {
+    /// Position of the parameter on the screen.
+    pub fn draw_pos(&self) -> (i32, i32) {
+        match self {
+            Parameter::Hie => (32, 34),
+            Parameter::Hre => (95, 34),
+            Parameter::Hfe => (32, 53),
+            Parameter::Hoe => (95, 53),
+        }
+    }
 }
 
 /// Responses to commands sent back by the firmware.

@@ -2,6 +2,7 @@
 
 pub mod color;
 pub mod com;
+pub mod display;
 pub mod measurement;
 pub mod sync;
 
