@@ -7,10 +7,11 @@ use panic_probe as _;
 use embassy_executor::Spawner;
 
 use embassy_stm32::{Peri, peripherals};
-use embassy_stm32::{dma, exti, usb};
+use embassy_stm32::{dma, exti, i2c, usb};
 
 mod communication;
 mod config;
+mod display;
 mod led;
 mod measurement;
 mod ui;
@@ -20,6 +21,13 @@ use crate::util::color;
 use crate::util::sync::RGB_LED_S;
 
 assign_resources::assign_resources! {
+    display: DisplayResources {
+        i2c: I2C2,
+        tx_dma: DMA1_CH2,
+        rx_dma: DMA1_CH3,
+        scl: PB3,
+        sda: PB4,
+    },
     led: LedResources {
         r: PB6,
         g: PB7,
@@ -29,7 +37,7 @@ assign_resources::assign_resources! {
     measurement: MeasurementResources {
         dac: DAC1,
         adc: ADC1,
-        dma: DMA2_CH1,
+        dma: DMA1_CH1,
         base_sel1: PB13,
         base_sel2: PB14,
         base_dac: PA5,
@@ -55,8 +63,10 @@ assign_resources::assign_resources! {
 }
 
 embassy_stm32::bind_interrupts!(struct Interrupts {
-    DMA1_CH4_7_DMA2_CH1_5_DMAMUX1_OVR => dma::InterruptHandler<peripherals::DMA2_CH1>;
+    DMA1_CHANNEL1 => dma::InterruptHandler<peripherals::DMA1_CH1>;
+    DMA1_CHANNEL2_3 => dma::InterruptHandler<peripherals::DMA1_CH2>, dma::InterruptHandler<peripherals::DMA1_CH3>;
     EXTI4_15 => exti::InterruptHandler<embassy_stm32::interrupt::typelevel::EXTI4_15>;
+    I2C2_3 => i2c::EventInterruptHandler<peripherals::I2C2>, i2c::ErrorInterruptHandler<peripherals::I2C2>;
     USB_UCPD1_2 => usb::InterruptHandler<peripherals::USB>;
 });
 
@@ -70,6 +80,7 @@ async fn main(spawner: Spawner) {
 
     spawner.spawn(defmt::unwrap!(led::driver(r.led)));
     spawner.spawn(defmt::unwrap!(ui::driver(r.ui)));
+    spawner.spawn(defmt::unwrap!(display::driver(r.display)));
     spawner.spawn(defmt::unwrap!(measurement::runner(r.measurement)));
 
     communication::start(spawner, r.usb);
