@@ -75,6 +75,17 @@ impl Command {
     }
 }
 
+/// Responses to commands sent back by the firmware.
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
+#[cfg_attr(not(feature = "defmt"), derive(Debug))]
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub enum Response {
+    /// Command acknowledged.
+    Ack,
+    /// Measurement result sent after a set command.
+    Measurement(MeasurementResult),
+}
+
 /// Hybrid model parameters names.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[cfg_attr(not(feature = "defmt"), derive(Debug))]
@@ -98,13 +109,15 @@ impl Parameter {
     }
 }
 
-/// Responses to commands sent back by the firmware.
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[cfg_attr(not(feature = "defmt"), derive(Debug))]
-#[derive(Clone, Copy, Serialize, Deserialize)]
-pub enum Response {
-    /// Command acknowledged.
-    Ack,
-    /// Measurement result sent after a set command.
-    Measurement(MeasurementResult),
+#[cfg(feature = "std")]
+impl std::fmt::Display for Parameter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Parameter::Hie => "Hie",
+            Parameter::Hre => "Hre",
+            Parameter::Hfe => "Hfe",
+            Parameter::Hoe => "Hoe",
+        })
+    }
+
 }
