@@ -8,9 +8,13 @@ use embassy_sync::signal::Signal;
 use qpoint_common::Response;
 
 use crate::util::MeasurementCommand;
+use crate::util::display::DisplayUpdate;
 
 /// Is a PC application attached.
 pub static ATTACHED_M: Mutex<MutexT, bool> = Mutex::new(false);
+
+/// Display updates queue.
+pub static DISPLAY_UPDATE_Q: Channel<MutexT, DisplayUpdate, 4> = Channel::new();
 
 /// Measurement commands queue.
 pub static MEASUREMENT_CMD_Q: Channel<MutexT, MeasurementCommand, 4> = Channel::new();
