@@ -75,7 +75,7 @@ pub async fn driver(r: DisplayResources) -> ! {
     loop {
         let update = DISPLAY_UPDATE_Q.receive().await;
         // locking it for the entire update stops updates from conflicting
-        let is_attached = ATTACHED_M.lock().await;
+        let mut is_attached = ATTACHED_M.lock().await;
         if update.is_normal_mode() && *is_attached {
             defmt::warn!("Trying to execute a normal mode display update while attached, ignoring");
             continue;
@@ -89,6 +89,7 @@ pub async fn driver(r: DisplayResources) -> ! {
         let result: Result<(), DisplayError> = async {
             match update {
                 DisplayUpdate::SetAttached => {
+                    *is_attached = true;
                     display::clear(&mut display)?;
                     display::attached::draw_layout(&mut display)?;
                     display::attached::draw_parameter(&mut display, Parameter::Hie, 0.0)?;
@@ -97,6 +98,7 @@ pub async fn driver(r: DisplayResources) -> ! {
                     display::attached::draw_parameter(&mut display, Parameter::Hoe, 0.0)?;
                 }
                 DisplayUpdate::SetNormal => {
+                    *is_attached = false;
                     display::clear(&mut display)?;
                     // HACK: we don't know the initial state of the selection and to avoid a global variable and
                     // polling, just directly read the GPIO IDR register.
@@ -115,7 +117,7 @@ pub async fn driver(r: DisplayResources) -> ! {
                 DisplayUpdate::SetGain(gain) => {
                     display::normal::draw_gain(&mut display, gain)?;
                 }
-                DisplayUpdate::SetParameter { value, param } => {
+                DisplayUpdate::SetParameter { param, value } => {
                     display::attached::draw_parameter(&mut display, param, value)?;
                 }
             }
@@ -127,6 +129,7 @@ pub async fn driver(r: DisplayResources) -> ! {
 
         if let Err(e) = result {
             defmt::error!("Display update failed: {}", e);
+            RGB_LED_S.signal(color::ERR);
         }
     }
 }

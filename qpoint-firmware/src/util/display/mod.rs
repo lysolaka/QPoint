@@ -14,12 +14,13 @@ pub enum DisplayUpdate {
     SetSelection(bool),
     SetDrop(f32),
     SetGain(f32),
-    SetParameter { value: f32, param: Parameter },
+    SetParameter { param: Parameter, value: f32 },
 }
 
 impl DisplayUpdate {
     pub fn is_normal_mode(&self) -> bool {
         match self {
+            DisplayUpdate::SetNormal => false,
             DisplayUpdate::SetParameter { .. } => false,
             _ => true,
         }

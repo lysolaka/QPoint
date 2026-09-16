@@ -6,7 +6,9 @@ use embassy_stm32::gpio::{Level, Pull};
 use embassy_futures::select::{Either, select};
 
 use crate::UiResources;
+use crate::util::display::DisplayUpdate;
 use crate::util::sync::ATTACHED_M;
+use crate::util::sync::DISPLAY_UPDATE_Q;
 
 #[embassy_executor::task]
 pub async fn driver(r: UiResources) -> ! {
@@ -42,7 +44,9 @@ pub async fn driver(r: UiResources) -> ! {
                 }
             }
             Either::Second(_) => {
-                // TODO: change the transistor type selection on the display
+                DISPLAY_UPDATE_Q
+                    .send(DisplayUpdate::SetSelection(select_bt.get_level().into()))
+                    .await;
             }
         }
     }
