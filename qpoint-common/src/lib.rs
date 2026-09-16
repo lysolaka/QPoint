@@ -61,6 +61,20 @@ pub enum Command {
     EmitterSelect(EmitterSource),
 }
 
+impl Command {
+    /// Is the command supposed to be run by the measurement runner.
+    pub fn is_measurement(&self) -> bool {
+        match self {
+            Command::BaseSelect(_) => true,
+            Command::BaseSet { .. } => true,
+            Command::CollectorSelect(_) => true,
+            Command::CollectorSet { .. } => true,
+            Command::EmitterSelect(_) => true,
+            _ => false,
+        }
+    }
+}
+
 /// Hybrid model parameters names.
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 #[cfg_attr(not(feature = "defmt"), derive(Debug))]

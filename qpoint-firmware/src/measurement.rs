@@ -72,7 +72,7 @@ pub async fn runner(r: MeasurementResources) -> ! {
                 emitter_control.select(source);
                 Response::Ack
             }
-            _ => defmt::panic!("Unexpected measurement command."),
+            _ => defmt::unreachable!(),
         };
 
         defmt::debug!("Sending back response: {:?}", &response);

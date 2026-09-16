@@ -43,13 +43,14 @@ pub async fn run<'d>(
                 RGB_LED_S.signal((r, g, b));
                 RESPONSE_TX_Q.send(Response::Ack).await;
             }
-            cmd => {
+            cmd if cmd.is_measurement() => {
                 let cmd = MeasurementCommand {
                     cmd,
                     source: CommandSource::Remote,
                 };
                 MEASUREMENT_CMD_Q.send(cmd).await;
             }
+            cmd => defmt::panic!("Unhandled command: {}", cmd),
         }
     }
 }
