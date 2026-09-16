@@ -27,21 +27,21 @@ pub async fn run<'d>(
         match cmd {
             Command::Attach => {
                 DISPLAY_UPDATE_Q.send(DisplayUpdate::SetAttached).await;
-                RESPONSE_TX_Q.send(Response::Ok).await;
+                RESPONSE_TX_Q.send(Response::Ack).await;
             }
             Command::Detach => {
                 DISPLAY_UPDATE_Q.send(DisplayUpdate::SetNormal).await;
-                RESPONSE_TX_Q.send(Response::Ok).await;
+                RESPONSE_TX_Q.send(Response::Ack).await;
             }
             Command::DisplayParam { param, value } => {
                 DISPLAY_UPDATE_Q
                     .send(DisplayUpdate::SetParameter { param, value })
                     .await;
-                RESPONSE_TX_Q.send(Response::Ok).await;
+                RESPONSE_TX_Q.send(Response::Ack).await;
             }
             Command::LedSet(r, g, b) => {
                 RGB_LED_S.signal((r, g, b));
-                RESPONSE_TX_Q.send(Response::Ok).await;
+                RESPONSE_TX_Q.send(Response::Ack).await;
             }
             cmd => {
                 let cmd = MeasurementCommand {

@@ -18,6 +18,8 @@ pub enum Command {
     Attach,
     /// Return control to the basic UI.
     Detach,
+    /// Display the `value` of parameter `param` on the screen.
+    DisplayParam { param: Parameter, value: f32 },
     /// Set an RGB LED colour.
     ///
     /// The format is `(r, g, b)`
@@ -57,8 +59,6 @@ pub enum Command {
     CollectorSet { value: f32, measure: bool },
     /// Select an emitter source.
     EmitterSelect(EmitterSource),
-    /// Display the `value` of parameter `param` on the screen.
-    DisplayParam { param: Parameter, value: f32 },
 }
 
 /// Hybrid model parameters names.
@@ -89,11 +89,8 @@ impl Parameter {
 #[cfg_attr(not(feature = "defmt"), derive(Debug))]
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum Response {
-    /// OK
-    Ok,
-    /// Error
-    // TODO: currently there are no errors, but put a type here once we get some
-    Err(i32),
+    /// Command acknowledged.
+    Ack,
     /// Measurement result sent after a set command.
     Measurement(MeasurementResult),
 }

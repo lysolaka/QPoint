@@ -32,7 +32,7 @@ pub async fn runner(r: MeasurementResources) -> ! {
         let response = match command.cmd {
             Command::BaseSelect(source) => {
                 base_control.select(source);
-                Response::Ok
+                Response::Ack
             }
             Command::BaseSet { value, measure } => {
                 base_control.set_value(value);
@@ -46,12 +46,12 @@ pub async fn runner(r: MeasurementResources) -> ! {
                     defmt::debug!("Measurement result: {:?}", &result);
                     Response::Measurement(result)
                 } else {
-                    Response::Ok
+                    Response::Ack
                 }
             }
             Command::CollectorSelect(source) => {
                 collector_control.select(source);
-                Response::Ok
+                Response::Ack
             }
             Command::CollectorSet { value, measure } => {
                 collector_control.set_value(value);
@@ -65,12 +65,12 @@ pub async fn runner(r: MeasurementResources) -> ! {
                     defmt::debug!("Measurement result: {:?}", &result);
                     Response::Measurement(result)
                 } else {
-                    Response::Ok
+                    Response::Ack
                 }
             }
             Command::EmitterSelect(source) => {
                 emitter_control.select(source);
-                Response::Ok
+                Response::Ack
             }
             _ => defmt::panic!("Unexpected measurement command."),
         };
