@@ -904,7 +904,7 @@ dependencies = [
 
 [[package]]
 name = "qpoint-common"
-version = "0.1.0-dev.3"
+version = "0.1.0"
 dependencies = [
  "defmt 1.1.1",
  "libm",
@@ -914,7 +914,7 @@ dependencies = [
 
 [[package]]
 name = "qpoint-firmware"
-version = "0.1.0-dev.3"
+version = "0.1.0"
 dependencies = [
  "assign-resources",
  "cortex-m",
