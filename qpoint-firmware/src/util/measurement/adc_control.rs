@@ -70,8 +70,9 @@ where
 
         // Ub [mV]
         let base_voltage = (buf[0] as f32) * U5V_1LSB;
-        // Ic [mA] = (Ui [mV] - 1650) / (100 * 0,3)
-        let collector_current = (((buf[1] as f32) * U3V3_1LSB) - 1650.0) / 30.0;
+        // Ic [mA] = -(Ui [mV] - 1650) / (100 * 0,3)
+        // the `-` sign is due to the wiring of the in-amp
+        let collector_current = -(((buf[1] as f32) * U3V3_1LSB) - 1650.0) / 30.0;
 
         MeasurementResult {
             base_voltage,
