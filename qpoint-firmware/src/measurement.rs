@@ -10,6 +10,7 @@ use crate::util::CommandSource;
 use crate::util::measurement::{AdcControl, BaseControl, CollectorControl, EmitterControl};
 use crate::util::sync::MEASUREMENT_CMD_Q;
 use crate::util::sync::RESPONSE_TX_Q;
+use crate::util::sync::RESPONSE_UI_S;
 
 #[embassy_executor::task]
 pub async fn runner(r: MeasurementResources) -> ! {
@@ -78,7 +79,12 @@ pub async fn runner(r: MeasurementResources) -> ! {
         defmt::debug!("Sending back response: {:?}", &response);
         // TODO: send back the response to the UI
         match command.source {
-            CommandSource::UI => defmt::todo!(),
+            CommandSource::UI => {
+                match response {
+                    Response::Ack => (), // do nothing
+                    Response::Measurement(result) => RESPONSE_UI_S.signal(result),
+                }
+            }
             CommandSource::Remote => RESPONSE_TX_Q.send(response).await,
         }
     }

@@ -6,6 +6,7 @@ use embassy_sync::mutex::Mutex;
 use embassy_sync::signal::Signal;
 
 use qpoint_common::Response;
+use qpoint_common::measurement::MeasurementResult;
 
 use crate::util::MeasurementCommand;
 use crate::util::display::DisplayUpdate;
@@ -21,6 +22,11 @@ pub static MEASUREMENT_CMD_Q: Channel<MutexT, MeasurementCommand, 4> = Channel::
 
 /// Response transmit queue.
 pub static RESPONSE_TX_Q: Channel<MutexT, Response, 4> = Channel::new();
+
+/// UI response signal.
+///
+/// No need for the full response here.
+pub static RESPONSE_UI_S: Signal<MutexT, MeasurementResult> = Signal::new();
 
 /// RGB LED colour signal in the (R, G, B) format.
 pub static RGB_LED_S: Signal<MutexT, (u8, u8, u8)> = Signal::new();
