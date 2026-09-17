@@ -12,7 +12,7 @@ mod serial;
 fn main() -> iced::Result {
     iced::application(State::default, State::update, State::view)
         .window(iced::window::Settings {
-            size: Size::new(512.0, 512.0),
+            size: Size::new(550.0, 550.0),
             ..Default::default()
         })
         .title("QPoint Executor")
