@@ -22,6 +22,7 @@ pub enum Message {
     StartPressed,
     IcConfig(ic_config::Message),
     IbConfig(ib_config::Message),
+    HParamConfig(hparam_config::Message),
 }
 
 #[derive(Default, Debug, Clone)]
@@ -34,6 +35,8 @@ pub struct State {
     ic_config: ic_config::State,
     /// [`Measurement::BaseCurrent`] config
     ib_config: ib_config::State,
+    /// [`Measurement::HParameters`] config
+    hparam_config: hparam_config::State,
 }
 
 impl State {
@@ -52,6 +55,7 @@ impl State {
             }
             Message::IcConfig(m) => self.ic_config.update(m),
             Message::IbConfig(m) => self.ib_config.update(m),
+            Message::HParamConfig(m) => self.hparam_config.update(m),
         }
     }
 
@@ -85,7 +89,7 @@ impl State {
         );
 
         let hparam_selector = radio(
-            "H Parameters",
+            "H Parameters (Common Emitter)",
             Measurement::HParameters,
             self.measurement_selection,
             Message::MeasurementSelected,
@@ -118,6 +122,7 @@ impl State {
             self.ib_config.view().map(Message::IbConfig),
             rule::horizontal(1),
             hparam_selector,
+            self.hparam_config.view().map(Message::HParamConfig),
             rule::horizontal(1),
             rule::horizontal(1),
             start_button,
