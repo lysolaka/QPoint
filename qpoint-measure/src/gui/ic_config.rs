@@ -132,8 +132,17 @@ impl State {
         row![condition_box, range_box]
             .width(Length::Fill)
             .height(Length::Shrink)
-            .spacing(36)
+            .spacing(134)
             .padding(4)
             .into()
+    }
+
+    pub fn load_defaults(&mut self) {
+        self.conditions = vec!["25.0".to_string(), "75.0".to_string(), "125.0".to_string()];
+        self.selected_condition = None;
+        self.condition_input = "".to_string();
+        self.start = "0.0".to_string();
+        self.end = "5.0".to_string();
+        self.step = "0.1".to_string();
     }
 }

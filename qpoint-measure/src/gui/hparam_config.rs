@@ -54,7 +54,6 @@ impl State {
     pub fn view(&self) -> Element<'_, Message> {
         let input_impedance = column![
             text("Input Impedance").style(text::primary),
-            // text("Base-Emitter voltage"),
             row![
                 text("UBE Start:")
                     .height(Length::Fill)
@@ -67,7 +66,9 @@ impl State {
                 text("V").height(Length::Fill).align_y(Alignment::Center)
             ],
             row![
-                text("UBE End:").height(Length::Fill).align_y(Alignment::Center),
+                text("UBE End:")
+                    .height(Length::Fill)
+                    .align_y(Alignment::Center),
                 space().width(15),
                 text_input("", &self.hie_end)
                     .on_input(Message::HieEndChanged)
@@ -176,7 +177,6 @@ impl State {
                 space().width(4),
                 text("uA").height(Length::Fill).align_y(Alignment::Center)
             ],
-            // text("Collector-Emitter voltage"),
             row![
                 text("UCE Start:")
                     .height(Length::Fill)
@@ -189,7 +189,9 @@ impl State {
                 text("V").height(Length::Fill).align_y(Alignment::Center)
             ],
             row![
-                text("UCE End:").height(Length::Fill).align_y(Alignment::Center),
+                text("UCE End:")
+                    .height(Length::Fill)
+                    .align_y(Alignment::Center),
                 space().width(40),
                 text_input("", &self.hoe_end)
                     .on_input(Message::HoeEndChanged)
@@ -223,5 +225,20 @@ impl State {
         .spacing(24)
         .padding(4)
         .into()
+    }
+
+    pub fn load_defaults(&mut self) {
+        self.hie_start = "0.0".to_string();
+        self.hie_end = "5.0".to_string();
+        self.hie_step = "0.1".to_string();
+        self.hre_current = "120.0".to_string();
+        self.hre_voltage = "5.0".to_string();
+        self.hfe_current1 = "25.0".to_string();
+        self.hfe_current2 = "125.0".to_string();
+        self.hfe_voltage = "2.5".to_string();
+        self.hoe_current = "100.0".to_string();
+        self.hoe_start = "0.0".to_string();
+        self.hoe_end = "5.0".to_string();
+        self.hoe_step = "0.1".to_string();
     }
 }

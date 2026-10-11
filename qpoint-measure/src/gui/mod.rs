@@ -19,6 +19,7 @@ pub enum Measurement {
 pub enum Message {
     TransistorTypeChanged(bool),
     MeasurementSelected(Measurement),
+    LoadDefaultsPressed,
     StartPressed,
     IcConfig(ic_config::Message),
     IbConfig(ib_config::Message),
@@ -44,6 +45,11 @@ impl State {
         match m {
             Message::TransistorTypeChanged(v) => self.type_selection = v,
             Message::MeasurementSelected(v) => self.measurement_selection = Some(v),
+            Message::LoadDefaultsPressed => {
+                self.ic_config.load_defaults();
+                self.ib_config.load_defaults();
+                self.hparam_config.load_defaults();
+            }
             Message::StartPressed => {
                 if self.measurement_selection.is_none() {
                     // TODO: add a dialog box for this
@@ -108,6 +114,18 @@ impl State {
         .padding(4)
         .center_x(Length::Fill);
 
+        let defaults_button = container(
+            button(
+                text("Load defaults")
+                    .width(Length::Fill)
+                    .align_x(Alignment::Center),
+            )
+            .width(Length::Fill)
+            .on_press(Message::LoadDefaultsPressed),
+        )
+        .padding(4)
+        .center_x(Length::Fill);
+
         column![
             title,
             rule::horizontal(1),
@@ -125,7 +143,7 @@ impl State {
             self.hparam_config.view().map(Message::HParamConfig),
             rule::horizontal(1),
             rule::horizontal(1),
-            start_button,
+            row![defaults_button, start_button].width(Length::Fill) // start_button,
         ]
         .width(Length::Fill)
         .height(Length::Fill)
