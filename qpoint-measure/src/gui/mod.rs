@@ -1,4 +1,4 @@
-use iced::widget::{button, column, container, radio, row, rule, text, toggler};
+use iced::widget::{button, column, container, radio, row, rule, text};
 use iced::{Alignment, Element, Length};
 
 mod hparam_config;
@@ -15,9 +15,16 @@ pub enum Measurement {
     HParameters,
 }
 
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum TransistorType {
+    #[default]
+    NPN,
+    PNP,
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
-    TransistorTypeChanged(bool),
+    TransistorTypeChanged(TransistorType),
     MeasurementSelected(Measurement),
     LoadDefaultsPressed,
     StartPressed,
@@ -28,8 +35,8 @@ pub enum Message {
 
 #[derive(Default, Debug, Clone)]
 pub struct State {
-    /// Transistor type selection: false - NPN, true - PNP
-    type_selection: bool,
+    /// Transistor type selection
+    type_selection: TransistorType,
     /// Measurement selection
     measurement_selection: Option<Measurement>,
     /// [`Measurement::CollectorCurrent`] config
@@ -71,14 +78,23 @@ impl State {
             .center_x(Length::Fill);
 
         let type_selection = row![
-            text("NPN").height(Length::Fill).align_y(Alignment::Center),
-            toggler(self.type_selection).on_toggle(Message::TransistorTypeChanged),
-            text("PNP").height(Length::Fill).align_y(Alignment::Center)
+            radio(
+                "NPN",
+                TransistorType::NPN,
+                Some(self.type_selection),
+                Message::TransistorTypeChanged
+            ),
+            radio(
+                "PNP",
+                TransistorType::PNP,
+                Some(self.type_selection),
+                Message::TransistorTypeChanged
+            ),
         ]
         .width(Length::Fill)
         .height(Length::Shrink)
-        .spacing(4)
-        .padding(8);
+        .spacing(8)
+        .padding([4, 0]);
 
         let ic_selector = radio(
             "Collector Current Graph",
