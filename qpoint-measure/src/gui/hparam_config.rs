@@ -1,6 +1,8 @@
 use iced::widget::{column, row, space, text, text_input};
 use iced::{Alignment, Element, Length};
 
+use crate::measure::hparam::HybridParameters;
+
 #[derive(Debug, Clone)]
 pub enum Message {
     HieStartChanged(String),
@@ -55,7 +57,7 @@ impl State {
         let input_impedance = column![
             text("Input Impedance").style(text::primary),
             row![
-                text("UBE Start:")
+                text("UB Start:")
                     .height(Length::Fill)
                     .align_y(Alignment::Center),
                 space().width(8),
@@ -66,7 +68,7 @@ impl State {
                 text("V").height(Length::Fill).align_y(Alignment::Center)
             ],
             row![
-                text("UBE End:")
+                text("UB End:")
                     .height(Length::Fill)
                     .align_y(Alignment::Center),
                 space().width(15),
@@ -77,7 +79,7 @@ impl State {
                 text("V").height(Length::Fill).align_y(Alignment::Center)
             ],
             row![
-                text("UBE Step:")
+                text("UB Step:")
                     .height(Length::Fill)
                     .align_y(Alignment::Center),
                 space().width(10),
@@ -240,5 +242,22 @@ impl State {
         self.hoe_start = "0.0".to_string();
         self.hoe_end = "5.0".to_string();
         self.hoe_step = "0.1".to_string();
+    }
+
+    pub fn parse(&self) -> Result<HybridParameters, String> {
+        HybridParameters::new(
+            &self.hie_start,
+            &self.hie_end,
+            &self.hie_step,
+            &self.hre_current,
+            &self.hre_voltage,
+            &self.hfe_current1,
+            &self.hfe_current2,
+            &self.hfe_voltage,
+            &self.hoe_current,
+            &self.hoe_start,
+            &self.hoe_end,
+            &self.hoe_step,
+        )
     }
 }

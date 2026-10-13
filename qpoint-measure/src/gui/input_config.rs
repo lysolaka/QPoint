@@ -3,6 +3,8 @@ use std::mem;
 use iced::widget::{button, column, pick_list, row, space, text, text_input};
 use iced::{Alignment, Element, Length};
 
+use crate::measure::input::InputCharacteristics;
+
 #[derive(Debug, Clone)]
 pub enum Message {
     ConditionInputChanged(String),
@@ -29,7 +31,9 @@ impl State {
         match m {
             Message::ConditionInputChanged(v) => self.condition_input = v,
             Message::AddCondition => {
-                if !self.conditions.contains(&self.condition_input) && !self.condition_input.is_empty() {
+                if !self.conditions.contains(&self.condition_input)
+                    && !self.condition_input.is_empty()
+                {
                     let cond = mem::replace(&mut self.condition_input, String::new());
                     self.conditions.push(cond);
                 }
@@ -144,5 +148,9 @@ impl State {
         self.start = "0.0".to_string();
         self.end = "5.0".to_string();
         self.step = "0.1".to_string();
+    }
+
+    pub fn parse(&self) -> Result<InputCharacteristics, String> {
+        InputCharacteristics::new(&self.conditions, &self.start, &self.end, &self.step)
     }
 }

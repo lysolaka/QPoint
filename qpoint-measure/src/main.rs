@@ -1,3 +1,4 @@
+mod measure;
 mod gui;
 
 fn main() -> iced::Result {

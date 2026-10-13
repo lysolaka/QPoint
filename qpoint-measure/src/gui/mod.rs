@@ -1,5 +1,6 @@
 use iced::widget::{button, column, container, radio, row, rule, text};
 use iced::{Alignment, Element, Length};
+use native_dialog::{DialogBuilder, MessageLevel};
 
 mod hparam_config;
 mod input_config;
@@ -43,7 +44,7 @@ pub struct State {
     output_config: output_config::State,
     /// [`Measurement::InputCharacteristics`] config
     input_config: input_config::State,
-    /// [`Measurement::HParameters`] config
+    /// [`Measurement::HybridParameters`] config
     hparam_config: hparam_config::State,
 }
 
@@ -59,10 +60,23 @@ impl State {
             }
             Message::StartPressed => {
                 if self.measurement_selection.is_none() {
-                    // TODO: add a dialog box for this
-                    println!("Select a measurement first");
+                    DialogBuilder::message()
+                        .set_title("QPoint Measure")
+                        .set_text("Select a measurement first!")
+                        .set_level(MessageLevel::Warning)
+                        .alert()
+                        .show()
+                        .unwrap();
                 } else {
-                    self.start_measurement(self.measurement_selection.unwrap());
+                    if let Err(e) = self.start_measurement(self.measurement_selection.unwrap()) {
+                        DialogBuilder::message()
+                            .set_title("QPoint Measure")
+                            .set_text(e)
+                            .set_level(MessageLevel::Error)
+                            .alert()
+                            .show()
+                            .unwrap();
+                    }
                 }
             }
             Message::OutputConfig(m) => self.output_config.update(m),
@@ -169,9 +183,20 @@ impl State {
 
     fn start_measurement(&self, measurement: Measurement) -> Result<(), String> {
         match measurement {
-            Measurement::OutputCharacteristics => todo!(),
-            Measurement::InputCharacteristics => todo!(),
-            Measurement::HybridParameters => todo!(),
+            Measurement::OutputCharacteristics => {
+                let measurement = self.output_config.parse()?;
+                println!("{:#?}", measurement);
+            }
+            Measurement::InputCharacteristics => {
+                let measurement = self.input_config.parse()?;
+                println!("{:#?}", measurement);
+            }
+            Measurement::HybridParameters => {
+                let measurement = self.hparam_config.parse()?;
+                println!("{:#?}", measurement);
+            },
         }
+
+        Ok(())
     }
 }
