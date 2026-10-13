@@ -2,17 +2,17 @@ use iced::widget::{button, column, container, radio, row, rule, text};
 use iced::{Alignment, Element, Length};
 
 mod hparam_config;
-mod ib_config;
-mod ic_config;
+mod input_config;
+mod output_config;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Measurement {
     /// Ic = f(Uce) @ Ib
-    CollectorCurrent,
+    OutputCharacteristics,
     /// Ib = f(Ube) @ Uce
-    BaseCurrent,
+    InputCharacteristics,
     /// Self explanatory
-    HParameters,
+    HybridParameters,
 }
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -28,8 +28,8 @@ pub enum Message {
     MeasurementSelected(Measurement),
     LoadDefaultsPressed,
     StartPressed,
-    IcConfig(ic_config::Message),
-    IbConfig(ib_config::Message),
+    OutputConfig(output_config::Message),
+    InputConfig(input_config::Message),
     HParamConfig(hparam_config::Message),
 }
 
@@ -39,10 +39,10 @@ pub struct State {
     type_selection: TransistorType,
     /// Measurement selection
     measurement_selection: Option<Measurement>,
-    /// [`Measurement::CollectorCurrent`] config
-    ic_config: ic_config::State,
-    /// [`Measurement::BaseCurrent`] config
-    ib_config: ib_config::State,
+    /// [`Measurement::OutputCharacteristics`] config
+    output_config: output_config::State,
+    /// [`Measurement::InputCharacteristics`] config
+    input_config: input_config::State,
     /// [`Measurement::HParameters`] config
     hparam_config: hparam_config::State,
 }
@@ -53,8 +53,8 @@ impl State {
             Message::TransistorTypeChanged(v) => self.type_selection = v,
             Message::MeasurementSelected(v) => self.measurement_selection = Some(v),
             Message::LoadDefaultsPressed => {
-                self.ic_config.load_defaults();
-                self.ib_config.load_defaults();
+                self.output_config.load_defaults();
+                self.input_config.load_defaults();
                 self.hparam_config.load_defaults();
             }
             Message::StartPressed => {
@@ -62,12 +62,11 @@ impl State {
                     // TODO: add a dialog box for this
                     println!("Select a measurement first");
                 } else {
-                    // TODO: implement measurements
-                    println!("Starting measurement: {:#?}", &self);
+                    self.start_measurement(self.measurement_selection.unwrap());
                 }
             }
-            Message::IcConfig(m) => self.ic_config.update(m),
-            Message::IbConfig(m) => self.ib_config.update(m),
+            Message::OutputConfig(m) => self.output_config.update(m),
+            Message::InputConfig(m) => self.input_config.update(m),
             Message::HParamConfig(m) => self.hparam_config.update(m),
         }
     }
@@ -96,23 +95,23 @@ impl State {
         .spacing(8)
         .padding([4, 0]);
 
-        let ic_selector = radio(
-            "Collector Current Graph",
-            Measurement::CollectorCurrent,
+        let output_selector = radio(
+            "Output Characteristics",
+            Measurement::OutputCharacteristics,
             self.measurement_selection,
             Message::MeasurementSelected,
         );
 
-        let ib_selector = radio(
-            "Base Current Graph",
-            Measurement::BaseCurrent,
+        let input_selector = radio(
+            "Input Characteristics",
+            Measurement::InputCharacteristics,
             self.measurement_selection,
             Message::MeasurementSelected,
         );
 
         let hparam_selector = radio(
-            "H Parameters (Common Emitter)",
-            Measurement::HParameters,
+            "Hybrid Parameters (Common Emitter)",
+            Measurement::HybridParameters,
             self.measurement_selection,
             Message::MeasurementSelected,
         );
@@ -149,22 +148,30 @@ impl State {
             text("Transistor Type").style(text::primary),
             type_selection,
             rule::horizontal(1),
-            ic_selector,
-            self.ic_config.view().map(Message::IcConfig),
+            output_selector,
+            self.output_config.view().map(Message::OutputConfig),
             rule::horizontal(1),
-            ib_selector,
-            self.ib_config.view().map(Message::IbConfig),
+            input_selector,
+            self.input_config.view().map(Message::InputConfig),
             rule::horizontal(1),
             hparam_selector,
             self.hparam_config.view().map(Message::HParamConfig),
             rule::horizontal(1),
             rule::horizontal(1),
-            row![defaults_button, start_button].width(Length::Fill) // start_button,
+            row![defaults_button, start_button].width(Length::Fill)
         ]
         .width(Length::Fill)
         .height(Length::Fill)
         .spacing(4)
         .padding(4)
         .into()
+    }
+
+    fn start_measurement(&self, measurement: Measurement) -> Result<(), String> {
+        match measurement {
+            Measurement::OutputCharacteristics => todo!(),
+            Measurement::InputCharacteristics => todo!(),
+            Measurement::HybridParameters => todo!(),
+        }
     }
 }
