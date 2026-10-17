@@ -87,7 +87,7 @@ async fn measure_npn() {
     RESPONSE_UI_S.reset();
     execute_commands(
         [Command::BaseSet {
-            value: 4.9,
+            value: 5.0,
             measure: true,
         }]
         .into_iter(),
@@ -171,7 +171,6 @@ async fn measure_pnp() {
         .await;
 }
 
-#[inline]
 async fn execute_commands(seq: impl Iterator<Item = Command>) {
     for cmd in seq {
         MEASUREMENT_CMD_Q
