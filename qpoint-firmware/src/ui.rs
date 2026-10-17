@@ -12,6 +12,7 @@ use qpoint_common::measurement::{BaseSource, CollectorSource, EmitterSource};
 use crate::UiResources;
 use crate::util::color;
 use crate::util::display::DisplayUpdate;
+use crate::util::measurement::{estimate_uce_sat, interval};
 use crate::util::sync::ATTACHED_M;
 use crate::util::sync::DISPLAY_UPDATE_Q;
 use crate::util::sync::MEASUREMENT_CMD_Q;
@@ -95,9 +96,10 @@ async fn measure_npn() {
     .await;
 
     let result = RESPONSE_UI_S.wait().await;
-    DISPLAY_UPDATE_Q
-        .send(DisplayUpdate::SetDrop(result.base_voltage / 1000.0))
-        .await;
+    let u_be = result.base_voltage / 1000.0;
+    defmt::debug!("U_BE = {=f32}", &u_be);
+
+    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetDrop(u_be)).await;
 
     // initial conditions for h_FE
     let init = [
@@ -118,9 +120,45 @@ async fn measure_npn() {
     .await;
 
     let result = RESPONSE_UI_S.wait().await;
-    DISPLAY_UPDATE_Q
-        .send(DisplayUpdate::SetGain(result.collector_current / 0.1))
+    let h_fe = result.collector_current / 0.1;
+    defmt::debug!("h_FE = {=f32}", &h_fe);
+
+    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetGain(h_fe)).await;
+
+    // initial conditions for U_CE(sat)
+    let init = [
+        Command::BaseSelect(BaseSource::ISource),
+        Command::BaseSet {
+            value: 20.0,
+            measure: false,
+        },
+        Command::CollectorSelect(CollectorSource::VSource),
+        Command::EmitterSelect(EmitterSource::GND),
+    ];
+    execute_commands(init.into_iter()).await;
+
+    RESPONSE_UI_S.reset();
+    let mut currents = [0.0; 21];
+    let mut step_index = 0;
+    for v in interval::<21>(0.0, 0.02) {
+        execute_commands(
+            [Command::CollectorSet {
+                value: v,
+                measure: true,
+            }]
+            .into_iter(),
+        )
         .await;
+        let result = RESPONSE_UI_S.wait().await;
+
+        currents[step_index] = result.collector_current;
+        step_index += 1;
+    }
+
+    let u_ce_sat = estimate_uce_sat(currents);
+    defmt::debug!("U_CE(sat) = {:?}", &u_ce_sat);
+
+    // TODO: display it
 }
 
 async fn measure_pnp() {
@@ -143,9 +181,10 @@ async fn measure_pnp() {
     .await;
 
     let result = RESPONSE_UI_S.wait().await;
-    DISPLAY_UPDATE_Q
-        .send(DisplayUpdate::SetDrop((result.base_voltage / 1000.0) - 5.0))
-        .await;
+    let u_be = (result.base_voltage / 1000.0) - 5.0;
+    defmt::debug!("U_BE = {=f32}", &u_be);
+
+    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetDrop(u_be)).await;
 
     // initial conditions for h_FE
     let init = [
@@ -166,9 +205,49 @@ async fn measure_pnp() {
     .await;
 
     let result = RESPONSE_UI_S.wait().await;
-    DISPLAY_UPDATE_Q
-        .send(DisplayUpdate::SetGain(-result.collector_current / 0.1))
+    let h_fe = -result.collector_current / 0.1;
+    defmt::debug!("h_FE = {=f32}", &h_fe);
+
+    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetGain(h_fe)).await;
+
+    // initial conditions for U_CE(sat)
+    let init = [
+        Command::BaseSelect(BaseSource::ISink),
+        Command::BaseSet {
+            value: 40.0,
+            measure: false,
+        },
+        Command::CollectorSelect(CollectorSource::VSource),
+        Command::CollectorSet {
+            value: 5.0,
+            measure: false,
+        },
+        Command::EmitterSelect(EmitterSource::VCC),
+    ];
+    execute_commands(init.into_iter()).await;
+
+    RESPONSE_UI_S.reset();
+    let mut currents = [0.0; 21];
+    let mut step_index = 0;
+    for v in interval::<21>(4.6, 0.02).into_iter().rev() {
+        execute_commands(
+            [Command::CollectorSet {
+                value: v,
+                measure: true,
+            }]
+            .into_iter(),
+        )
         .await;
+        let result = RESPONSE_UI_S.wait().await;
+
+        currents[step_index] = -result.collector_current;
+        step_index += 1;
+    }
+
+    let u_ce_sat = estimate_uce_sat(currents).map(|v| -v);
+    defmt::debug!("U_CE(sat) = {:?}", &u_ce_sat);
+
+    // TODO: display it
 }
 
 async fn execute_commands(seq: impl Iterator<Item = Command>) {
