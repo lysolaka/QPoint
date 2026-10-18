@@ -11,8 +11,8 @@ use qpoint_common::measurement::MeasurementResult;
 use crate::util::MeasurementCommand;
 use crate::util::display::DisplayUpdate;
 
-/// Is a PC application attached.
-pub static ATTACHED_M: Mutex<MutexT, bool> = Mutex::new(false);
+/// Is the PC application doing any measurements.
+pub static UI_LOCK_M: Mutex<MutexT, bool> = Mutex::new(false);
 
 /// Display updates queue.
 pub static DISPLAY_UPDATE_Q: Channel<MutexT, DisplayUpdate, 4> = Channel::new();

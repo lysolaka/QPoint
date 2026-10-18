@@ -1,58 +1,63 @@
 use embedded_graphics::{
-    mono_font::ascii::{FONT_4X6, FONT_5X8, FONT_6X12},
-    mono_font::{MonoTextStyle, MonoTextStyleBuilder},
     pixelcolor::BinaryColor,
     primitives::{PrimitiveStyle, PrimitiveStyleBuilder},
-    text::{Alignment, Baseline, TextStyle, TextStyleBuilder},
 };
 
-pub const LINE_STYLE: PrimitiveStyle<BinaryColor> = PrimitiveStyleBuilder::new()
+pub const LINE: PrimitiveStyle<BinaryColor> = PrimitiveStyleBuilder::new()
     .stroke_width(1)
     .stroke_color(BinaryColor::On)
-    .fill_color(BinaryColor::Off)
     .build();
 
-pub const FILL_STYLE: PrimitiveStyle<BinaryColor> = PrimitiveStyleBuilder::new()
-    .stroke_width(1)
-    .stroke_color(BinaryColor::On)
+pub const FILL: PrimitiveStyle<BinaryColor> = PrimitiveStyleBuilder::new()
     .fill_color(BinaryColor::On)
     .build();
 
-pub const DEFAULT_STYLE: MonoTextStyle<'_, BinaryColor> = MonoTextStyleBuilder::new()
-    .font(&FONT_6X12)
-    .text_color(BinaryColor::On)
-    .background_color(BinaryColor::Off)
+pub const CLEAR: PrimitiveStyle<BinaryColor> = PrimitiveStyleBuilder::new()
+    .fill_color(BinaryColor::Off)
     .build();
 
-pub const INVERTED_STYLE: MonoTextStyle<'_, BinaryColor> = MonoTextStyleBuilder::new()
-    .font(&FONT_6X12)
-    .text_color(BinaryColor::Off)
-    .background_color(BinaryColor::On)
-    .build();
+pub mod mono_font {
+    use embedded_graphics::{
+        mono_font::ascii::FONT_5X8,
+        mono_font::ascii::FONT_6X12,
+        mono_font::{MonoTextStyle, MonoTextStyleBuilder},
+        pixelcolor::BinaryColor,
+    };
 
-pub const SUB_STYLE: MonoTextStyle<'_, BinaryColor> = MonoTextStyleBuilder::new()
-    .font(&FONT_4X6)
-    .text_color(BinaryColor::On)
-    .background_color(BinaryColor::Off)
-    .build();
+    pub const NORMAL: MonoTextStyle<BinaryColor> = MonoTextStyleBuilder::new()
+        .font(&FONT_6X12)
+        .text_color(BinaryColor::On)
+        .background_color(BinaryColor::Off)
+        .build();
 
-pub const SYM_STYLE: MonoTextStyle<'_, BinaryColor> = MonoTextStyleBuilder::new()
-    .font(&FONT_5X8)
-    .text_color(BinaryColor::On)
-    .background_color(BinaryColor::Off)
-    .build();
+    pub const INVERTED: MonoTextStyle<'_, BinaryColor> = MonoTextStyleBuilder::new()
+        .font(&FONT_6X12)
+        .text_color(BinaryColor::Off)
+        .background_color(BinaryColor::On)
+        .build();
 
-pub const DEFAULT_TEXT: TextStyle = TextStyleBuilder::new()
-    .alignment(Alignment::Left)
-    .baseline(Baseline::Middle)
-    .build();
+    pub const SUBSCRIPT: MonoTextStyle<'_, BinaryColor> = MonoTextStyleBuilder::new()
+        .font(&FONT_5X8)
+        .text_color(BinaryColor::On)
+        .background_color(BinaryColor::Off)
+        .build();
+}
 
-pub const NUM_TEXT: TextStyle = TextStyleBuilder::new()
-    .alignment(Alignment::Center)
-    .baseline(Baseline::Middle)
-    .build();
+pub mod text {
+    use embedded_graphics::text::{Alignment, Baseline, TextStyle, TextStyleBuilder};
 
-pub const SUB_TEXT: TextStyle = TextStyleBuilder::new()
-    .alignment(Alignment::Left)
-    .baseline(Baseline::Top)
-    .build();
+    pub const LEFT: TextStyle = TextStyleBuilder::new()
+        .alignment(Alignment::Left)
+        .baseline(Baseline::Top)
+        .build();
+
+    pub const SUB_LEFT: TextStyle = TextStyleBuilder::new()
+        .alignment(Alignment::Left)
+        .baseline(Baseline::Bottom)
+        .build();
+
+    pub const CENTER: TextStyle = TextStyleBuilder::new()
+        .alignment(Alignment::Center)
+        .baseline(Baseline::Top)
+        .build();
+}

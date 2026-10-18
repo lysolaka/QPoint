@@ -6,10 +6,11 @@ use embassy_usb::class::cdc_acm::BufferedReceiver;
 
 use qpoint_common::{Command, Response};
 
+use crate::util::color;
 use crate::util::com;
 use crate::util::com::FramedReceiver;
 use crate::util::display::DisplayUpdate;
-use crate::util::sync::{DISPLAY_UPDATE_Q, MEASUREMENT_CMD_Q, RESPONSE_TX_Q, RGB_LED_S};
+use crate::util::sync::{DISPLAY_UPDATE_Q, MEASUREMENT_CMD_Q, RESPONSE_TX_Q, RGB_LED_S, UI_LOCK_M};
 use crate::util::{CommandSource, MeasurementCommand};
 
 pub async fn run<'d>(
@@ -25,18 +26,22 @@ pub async fn run<'d>(
 
         defmt::debug!("Running command: {:?}", &cmd);
         match cmd {
-            Command::Attach => {
-                DISPLAY_UPDATE_Q.send(DisplayUpdate::SetAttached).await;
+            Command::Lock => {
+                RGB_LED_S.signal(color::WAIT);
+                {
+                    let mut lock = UI_LOCK_M.lock().await;
+                    *lock = true;
+                }
+                DISPLAY_UPDATE_Q.send(DisplayUpdate::Lock).await;
                 RESPONSE_TX_Q.send(Response::Ack).await;
             }
-            Command::Detach => {
-                DISPLAY_UPDATE_Q.send(DisplayUpdate::SetNormal).await;
-                RESPONSE_TX_Q.send(Response::Ack).await;
-            }
-            Command::DisplayParam { param, value } => {
-                DISPLAY_UPDATE_Q
-                    .send(DisplayUpdate::SetParameter { param, value })
-                    .await;
+            Command::Unlock => {
+                RGB_LED_S.signal(color::OK);
+                {
+                    let mut lock = UI_LOCK_M.lock().await;
+                    *lock = false;
+                }
+                DISPLAY_UPDATE_Q.send(DisplayUpdate::Unlock).await;
                 RESPONSE_TX_Q.send(Response::Ack).await;
             }
             Command::LedSet(r, g, b) => {

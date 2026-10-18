@@ -13,11 +13,11 @@ use crate::UiResources;
 use crate::util::color;
 use crate::util::display::DisplayUpdate;
 use crate::util::measurement::{estimate_uce_sat, interval};
-use crate::util::sync::ATTACHED_M;
 use crate::util::sync::DISPLAY_UPDATE_Q;
 use crate::util::sync::MEASUREMENT_CMD_Q;
 use crate::util::sync::RESPONSE_UI_S;
 use crate::util::sync::RGB_LED_S;
+use crate::util::sync::UI_LOCK_M;
 use crate::util::{CommandSource, MeasurementCommand};
 
 #[embassy_executor::task]
@@ -36,14 +36,18 @@ pub async fn driver(r: UiResources) -> ! {
         )
         .await;
 
-        if *ATTACHED_M.lock().await {
-            defmt::warn!("A button was pressed, but the device is attached. Ignoring...");
+        if *UI_LOCK_M.lock().await {
+            defmt::warn!("A button was pressed, but the local UI is locked. Ignoring...");
             continue;
         }
 
         match pressed {
             Either::First(_) => {
+                // acquire the lock so that nothing will lock the ui while there's a measurement
+                let _token = UI_LOCK_M.lock().await;
+
                 defmt::info!("Starting measurement from the local UI");
+                DISPLAY_UPDATE_Q.send(DisplayUpdate::ClearValues).await;
                 let selection = select_bt.get_level();
                 RGB_LED_S.signal(color::WAIT);
                 if selection == Level::Low {
@@ -59,6 +63,9 @@ pub async fn driver(r: UiResources) -> ! {
                 RGB_LED_S.signal(color::OK);
             }
             Either::Second(_) => {
+                // acquire the lock so that nothing will lock the ui while there's an update
+                let _token = UI_LOCK_M.lock().await;
+
                 DISPLAY_UPDATE_Q
                     .send(DisplayUpdate::SetSelection(select_bt.get_level().into()))
                     .await;
@@ -99,7 +106,7 @@ async fn measure_npn() {
     let u_be = result.base_voltage / 1000.0;
     defmt::debug!("U_BE = {=f32}", &u_be);
 
-    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetDrop(u_be)).await;
+    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetUbe(u_be)).await;
 
     // initial conditions for h_FE
     let init = [
@@ -123,7 +130,7 @@ async fn measure_npn() {
     let h_fe = result.collector_current / 0.1;
     defmt::debug!("h_FE = {=f32}", &h_fe);
 
-    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetGain(h_fe)).await;
+    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetHfe(h_fe)).await;
 
     // initial conditions for U_CE(sat)
     let init = [
@@ -158,7 +165,9 @@ async fn measure_npn() {
     let u_ce_sat = estimate_uce_sat(currents);
     defmt::debug!("U_CE(sat) = {:?}", &u_ce_sat);
 
-    // TODO: display it
+    DISPLAY_UPDATE_Q
+        .send(DisplayUpdate::SetUceSat(u_ce_sat))
+        .await;
 }
 
 async fn measure_pnp() {
@@ -184,7 +193,7 @@ async fn measure_pnp() {
     let u_be = (result.base_voltage / 1000.0) - 5.0;
     defmt::debug!("U_BE = {=f32}", &u_be);
 
-    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetDrop(u_be)).await;
+    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetUbe(u_be)).await;
 
     // initial conditions for h_FE
     let init = [
@@ -208,7 +217,7 @@ async fn measure_pnp() {
     let h_fe = -result.collector_current / 0.1;
     defmt::debug!("h_FE = {=f32}", &h_fe);
 
-    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetGain(h_fe)).await;
+    DISPLAY_UPDATE_Q.send(DisplayUpdate::SetHfe(h_fe)).await;
 
     // initial conditions for U_CE(sat)
     let init = [
@@ -247,7 +256,9 @@ async fn measure_pnp() {
     let u_ce_sat = estimate_uce_sat(currents).map(|v| -v);
     defmt::debug!("U_CE(sat) = {:?}", &u_ce_sat);
 
-    // TODO: display it
+    DISPLAY_UPDATE_Q
+        .send(DisplayUpdate::SetUceSat(u_ce_sat))
+        .await;
 }
 
 async fn execute_commands(seq: impl Iterator<Item = Command>) {

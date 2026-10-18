@@ -5,14 +5,14 @@ use iced::{Alignment, Length, Size};
 use native_dialog::{DialogBuilder, MessageLevel};
 
 use qpoint_common::measurement::{BaseSource, CollectorSource, EmitterSource};
-use qpoint_common::{Command, Parameter};
+use qpoint_common::Command;
 
 mod serial;
 
 fn main() -> iced::Result {
     iced::application(State::default, State::update, State::view)
         .window(iced::window::Settings {
-            size: Size::new(550.0, 550.0),
+            size: Size::new(550.0, 490.0),
             ..Default::default()
         })
         .title("QPoint Executor")
@@ -37,9 +37,8 @@ enum Error {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CommandFlat {
-    Attach,
-    Detach,
-    DisplayParam,
+    Lock,
+    Unlock,
     LedSet,
     BaseSelect,
     BaseSet,
@@ -51,12 +50,8 @@ enum CommandFlat {
 impl CommandFlat {
     fn into_command(&self, values: &State) -> Result<Command, crate::Error> {
         let cmd = match self {
-            CommandFlat::Attach => Command::Attach,
-            CommandFlat::Detach => Command::Detach,
-            CommandFlat::DisplayParam => Command::DisplayParam {
-                param: values.param,
-                value: values.param_value.parse()?,
-            },
+            CommandFlat::Lock => Command::Lock,
+            CommandFlat::Unlock => Command::Unlock,
             CommandFlat::LedSet => Command::LedSet(
                 u8::from_str_radix(&values.led_r, 16)?,
                 u8::from_str_radix(&values.led_g, 16)?,
@@ -93,8 +88,6 @@ impl CommandFlat {
 enum Message {
     ExecutePressed,
     CommandSelected(CommandFlat),
-    ParamSelected(Parameter),
-    ParamValueChanged(String),
     LedRChanged(String),
     LedGChanged(String),
     LedBChanged(String),
@@ -108,8 +101,6 @@ enum Message {
 }
 
 struct State {
-    param: Parameter,
-    param_value: String,
     led_r: String,
     led_g: String,
     led_b: String,
@@ -145,8 +136,6 @@ impl State {
                 }
             }
             Message::CommandSelected(command) => self.selected_command = command,
-            Message::ParamValueChanged(value) => self.param_value = value,
-            Message::ParamSelected(param) => self.param = param,
             Message::LedRChanged(r) => self.led_r = r,
             Message::LedGChanged(g) => self.led_g = g,
             Message::LedBChanged(b) => self.led_b = b,
@@ -167,23 +156,16 @@ impl State {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let radio_attach = radio(
-            "Attach",
-            CommandFlat::Attach,
+        let radio_lock = radio(
+            "Lock",
+            CommandFlat::Lock,
             Some(self.selected_command),
             Message::CommandSelected,
         );
 
-        let radio_detach = radio(
-            "Detach",
-            CommandFlat::Detach,
-            Some(self.selected_command),
-            Message::CommandSelected,
-        );
-
-        let radio_display_param = radio(
-            "Display parameter",
-            CommandFlat::DisplayParam,
+        let radio_unlock = radio(
+            "Unlock",
+            CommandFlat::Unlock,
             Some(self.selected_command),
             Message::CommandSelected,
         );
@@ -229,27 +211,6 @@ impl State {
             Some(self.selected_command),
             Message::CommandSelected,
         );
-
-        let display_param = row![
-            radio_display_param,
-            space().width(6),
-            pick_list(
-                [
-                    Parameter::Hie,
-                    Parameter::Hre,
-                    Parameter::Hfe,
-                    Parameter::Hoe
-                ],
-                Some(self.param),
-                Message::ParamSelected
-            ),
-            text("Value:"),
-            text_input("value", &self.param_value)
-                .on_input(Message::ParamValueChanged)
-                .width(Length::Fixed(140.0)),
-        ]
-        .spacing(12)
-        .align_y(Alignment::Center);
 
         let led_set = row![
             radio_led_set,
@@ -359,11 +320,9 @@ impl State {
                 .align_x(Alignment::Center)
                 .width(Length::Fill),
             space().height(12),
-            radio_attach,
+            radio_lock,
             space().height(3),
-            radio_detach,
-            space().height(3),
-            display_param,
+            radio_unlock,
             space().height(3),
             led_set,
             space().height(8),
@@ -388,8 +347,6 @@ impl State {
 impl Default for State {
     fn default() -> Self {
         Self {
-            param: Parameter::Hie,
-            param_value: "0".to_string(),
             led_r: "0".to_string(),
             led_g: "0".to_string(),
             led_b: "0".to_string(),
@@ -400,7 +357,7 @@ impl Default for State {
             collector_value: "0".to_string(),
             collector_measure: false,
             emitter_source: Some(EmitterSource::HighZ),
-            selected_command: CommandFlat::Attach,
+            selected_command: CommandFlat::Lock,
         }
     }
 }

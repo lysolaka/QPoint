@@ -15,11 +15,9 @@ use crate::measurement::{BaseSource, CollectorSource, EmitterSource, Measurement
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum Command {
     /// Setup the device for control by the USB interface.
-    Attach,
+    Lock,
     /// Return control to the basic UI.
-    Detach,
-    /// Display the `value` of parameter `param` on the screen.
-    DisplayParam { param: Parameter, value: f32 },
+    Unlock,
     /// Set an RGB LED colour.
     ///
     /// The format is `(r, g, b)`
@@ -84,40 +82,4 @@ pub enum Response {
     Ack,
     /// Measurement result sent after a set command.
     Measurement(MeasurementResult),
-}
-
-/// Hybrid model parameters names.
-#[cfg_attr(feature = "defmt", derive(defmt::Format))]
-#[cfg_attr(not(feature = "defmt"), derive(Debug))]
-#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
-pub enum Parameter {
-    Hie,
-    Hre,
-    Hfe,
-    Hoe,
-}
-
-impl Parameter {
-    /// Position of the parameter on the screen.
-    pub fn draw_pos(&self) -> (i32, i32) {
-        match self {
-            Parameter::Hie => (32, 34),
-            Parameter::Hre => (95, 34),
-            Parameter::Hfe => (32, 53),
-            Parameter::Hoe => (95, 53),
-        }
-    }
-}
-
-#[cfg(feature = "std")]
-impl std::fmt::Display for Parameter {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(match self {
-            Parameter::Hie => "Hie",
-            Parameter::Hre => "Hre",
-            Parameter::Hfe => "Hfe",
-            Parameter::Hoe => "Hoe",
-        })
-    }
-
 }
