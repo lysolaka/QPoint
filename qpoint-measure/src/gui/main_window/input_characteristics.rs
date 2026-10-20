@@ -3,21 +3,10 @@ use std::mem;
 use iced::widget::{button, column, pick_list, row, space, text, text_input};
 use iced::{Alignment, Element, Length};
 
-use crate::measure::input::InputCharacteristics;
+use crate::measure::InputCharacteristics;
 
-#[derive(Debug, Clone)]
-pub enum Message {
-    ConditionInputChanged(String),
-    AddCondition,
-    ConditionSelected(String),
-    RemoveCondition,
-    StartChanged(String),
-    EndChanged(String),
-    StepChanged(String),
-}
-
-#[derive(Default, Debug, Clone)]
-pub struct State {
+#[derive(Clone, Debug)]
+pub struct Config {
     conditions: Vec<String>,
     selected_condition: Option<String>,
     condition_input: String,
@@ -26,10 +15,31 @@ pub struct State {
     step: String,
 }
 
-impl State {
-    pub fn update(&mut self, m: Message) {
-        match m {
-            Message::ConditionInputChanged(v) => self.condition_input = v,
+#[derive(Clone, Debug)]
+pub enum Message {
+    AddCondition,
+    RemoveCondition,
+    ConditionInputChanged(String),
+    ConditionSelected(String),
+    StartChanged(String),
+    EndChanged(String),
+    StepChanged(String),
+}
+
+impl Config {
+    pub fn new() -> Self {
+        Self {
+            conditions: Vec::with_capacity(8),
+            selected_condition: None,
+            condition_input: String::new(),
+            start: String::new(),
+            end: String::new(),
+            step: String::new(),
+        }
+    }
+
+    pub fn update(&mut self, message: Message) {
+        match message {
             Message::AddCondition => {
                 if !self.conditions.contains(&self.condition_input)
                     && !self.condition_input.is_empty()
@@ -38,7 +48,6 @@ impl State {
                     self.conditions.push(cond);
                 }
             }
-            Message::ConditionSelected(v) => self.selected_condition = Some(v),
             Message::RemoveCondition => {
                 if let Some(cond) = self.selected_condition.as_ref() {
                     if let Some((idx, _)) =
@@ -49,6 +58,8 @@ impl State {
                     }
                 }
             }
+            Message::ConditionInputChanged(v) => self.condition_input = v,
+            Message::ConditionSelected(v) => self.selected_condition = Some(v),
             Message::StartChanged(v) => self.start = v,
             Message::EndChanged(v) => self.end = v,
             Message::StepChanged(v) => self.step = v,
@@ -141,16 +152,20 @@ impl State {
             .into()
     }
 
-    pub fn load_defaults(&mut self) {
-        self.conditions = vec!["0.0".to_string(), "5.0".to_string()];
-        self.selected_condition = None;
-        self.condition_input = "".to_string();
-        self.start = "0.0".to_string();
-        self.end = "5.0".to_string();
-        self.step = "0.1".to_string();
-    }
-
     pub fn parse(&self) -> Result<InputCharacteristics, String> {
         InputCharacteristics::new(&self.conditions, &self.start, &self.end, &self.step)
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            conditions: vec![String::from("0.0"), String::from("5.0")],
+            selected_condition: None,
+            condition_input: String::new(),
+            start: String::from("0.0"),
+            end: String::from("5.0"),
+            step: String::from("0.1"),
+        }
     }
 }

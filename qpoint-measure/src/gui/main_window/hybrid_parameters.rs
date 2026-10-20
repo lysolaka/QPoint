@@ -1,9 +1,25 @@
 use iced::widget::{column, row, space, text, text_input};
 use iced::{Alignment, Element, Length};
 
-use crate::measure::hparam::HybridParameters;
+use crate::measure::HybridParameters;
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
+pub struct Config {
+    hie_start: String,
+    hie_end: String,
+    hie_step: String,
+    hre_current: String,
+    hre_voltage: String,
+    hfe_current1: String,
+    hfe_current2: String,
+    hfe_voltage: String,
+    hoe_current: String,
+    hoe_start: String,
+    hoe_end: String,
+    hoe_step: String,
+}
+
+#[derive(Clone, Debug)]
 pub enum Message {
     HieStartChanged(String),
     HieEndChanged(String),
@@ -19,25 +35,26 @@ pub enum Message {
     HoeStepChanged(String),
 }
 
-#[derive(Default, Debug, Clone)]
-pub struct State {
-    hie_start: String,
-    hie_end: String,
-    hie_step: String,
-    hre_current: String,
-    hre_voltage: String,
-    hfe_current1: String,
-    hfe_current2: String,
-    hfe_voltage: String,
-    hoe_current: String,
-    hoe_start: String,
-    hoe_end: String,
-    hoe_step: String,
-}
+impl Config {
+    pub fn new() -> Self {
+        Self {
+            hie_start: String::new(),
+            hie_end: String::new(),
+            hie_step: String::new(),
+            hre_current: String::new(),
+            hre_voltage: String::new(),
+            hfe_current1: String::new(),
+            hfe_current2: String::new(),
+            hfe_voltage: String::new(),
+            hoe_current: String::new(),
+            hoe_start: String::new(),
+            hoe_end: String::new(),
+            hoe_step: String::new(),
+        }
+    }
 
-impl State {
-    pub fn update(&mut self, m: Message) {
-        match m {
+    pub fn update(&mut self, message: Message) {
+        match message {
             Message::HieStartChanged(v) => self.hie_start = v,
             Message::HieEndChanged(v) => self.hie_end = v,
             Message::HieStepChanged(v) => self.hie_step = v,
@@ -229,21 +246,6 @@ impl State {
         .into()
     }
 
-    pub fn load_defaults(&mut self) {
-        self.hie_start = "0.0".to_string();
-        self.hie_end = "5.0".to_string();
-        self.hie_step = "0.1".to_string();
-        self.hre_current = "120.0".to_string();
-        self.hre_voltage = "5.0".to_string();
-        self.hfe_current1 = "25.0".to_string();
-        self.hfe_current2 = "125.0".to_string();
-        self.hfe_voltage = "2.5".to_string();
-        self.hoe_current = "100.0".to_string();
-        self.hoe_start = "0.0".to_string();
-        self.hoe_end = "5.0".to_string();
-        self.hoe_step = "0.1".to_string();
-    }
-
     pub fn parse(&self) -> Result<HybridParameters, String> {
         HybridParameters::new(
             &self.hie_start,
@@ -259,5 +261,24 @@ impl State {
             &self.hoe_end,
             &self.hoe_step,
         )
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            hie_start: String::from("0.0"),
+            hie_end: String::from("5.0"),
+            hie_step: String::from("0.1"),
+            hre_current: String::from("120.0"),
+            hre_voltage: String::from("5.0"),
+            hfe_current1: String::from("25.0"),
+            hfe_current2: String::from("125.0"),
+            hfe_voltage: String::from("2.5"),
+            hoe_current: String::from("100.0"),
+            hoe_start: String::from("0.0"),
+            hoe_end: String::from("5.0"),
+            hoe_step: String::from("0.1"),
+        }
     }
 }

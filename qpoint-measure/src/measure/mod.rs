@@ -2,9 +2,13 @@
 // TODO: make code alive
 #![allow(dead_code)]
 
-pub mod hparam;
-pub mod input;
-pub mod output;
+mod hparam;
+mod input;
+mod output;
+
+pub use hparam::HybridParameters;
+pub use input::InputCharacteristics;
+pub use output::OutputCharacteristics;
 
 fn parse_val(v: &str, name: &str) -> Result<f32, String> {
     v.parse()

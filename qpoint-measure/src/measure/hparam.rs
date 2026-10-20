@@ -73,27 +73,27 @@ impl HybridParameters {
 }
 
 #[derive(Debug)]
-pub struct InputImpedance {
+struct InputImpedance {
     ub_start: f32,
     ub_end: f32,
     ub_step: f32,
 }
 
 #[derive(Debug)]
-pub struct ReverseTransfer {
+struct ReverseTransfer {
     base_current: f32,
     ce_voltage: f32,
 }
 
 #[derive(Debug)]
-pub struct ForwardGain {
+struct ForwardGain {
     base_current1: f32,
     base_current2: f32,
     ce_voltage: f32,
 }
 
 #[derive(Debug)]
-pub struct OutputAdmittance {
+struct OutputAdmittance {
     base_current: f32,
     uce_start: f32,
     uce_end: f32,
