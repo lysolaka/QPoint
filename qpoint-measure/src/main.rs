@@ -7,6 +7,7 @@ use iced::{Element, Size, Subscription, Task};
 
 mod gui;
 mod measure;
+mod com;
 
 use crate::gui::main_window::{self, MainWindow};
 

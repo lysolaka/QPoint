@@ -7,7 +7,8 @@ edition = "2024"
 iced = { version = "0.14", features = ["canvas", "svg", "tokio"] }
 native-dialog = "0.9"
 postcard = { version = "1.1", features = ["use-std"] }
-serialport = "4.10"
 thiserror = "2.0"
+tokio = { version = "1.54", features = ["rt", "io-util", "sync", "time"] }
+tokio-serial = "5.5"
 
 qpoint-common = { path = "../qpoint-common", features = ["std"] }
