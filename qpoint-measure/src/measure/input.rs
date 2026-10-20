@@ -1,3 +1,4 @@
+use crate::measure::VOLTAGE_RANGE;
 use crate::measure::parse_val;
 
 #[derive(Debug)]
@@ -21,9 +22,7 @@ impl InputCharacteristics {
 
         let mut ce_voltages: Vec<f32> = Vec::with_capacity(conditions.len());
         for cond in conditions.iter() {
-            ce_voltages.push(
-                parse_val(cond, "condition")?,
-            );
+            ce_voltages.push(parse_val(cond, "condition")?);
         }
 
         ce_voltages.sort_by(|a, b| a.total_cmp(b));
@@ -32,7 +31,24 @@ impl InputCharacteristics {
         let end = parse_val(end, "start")?;
         let step = parse_val(step, "step")?;
 
-        // TODO: check ranges
+        for ib in ce_voltages.iter() {
+            if !VOLTAGE_RANGE.contains(ib) {
+                return Err(format!(
+                    "Collector-Emitter voltage: {} V is out of range",
+                    ib
+                ));
+            }
+        }
+
+        if !VOLTAGE_RANGE.contains(&start) {
+            return Err(format!("Start value: {} V is out of range", start));
+        }
+        if !VOLTAGE_RANGE.contains(&end) {
+            return Err(format!("End value: {} V is out of range", end));
+        }
+        if !VOLTAGE_RANGE.contains(&step) {
+            return Err(format!("Step value: {} V is out of range", step));
+        }
 
         Ok(Self {
             ce_voltages,

@@ -1,4 +1,5 @@
 use crate::measure::parse_val;
+use crate::measure::{CURRENT_RANGE, VOLTAGE_RANGE};
 
 #[derive(Debug)]
 pub struct HybridParameters {
@@ -45,7 +46,63 @@ impl HybridParameters {
         let hoe_end = parse_val(hoe_end, "UCE End")?;
         let hoe_step = parse_val(hoe_step, "UCE Step")?;
 
-        // TODO: check ranges
+        if !VOLTAGE_RANGE.contains(&hie_start) {
+            return Err(format!("UB Start value: {} V is out of range", hie_start));
+        }
+        if !VOLTAGE_RANGE.contains(&hie_end) {
+            return Err(format!("UB End value: {} V is out of range", hie_end));
+        }
+        if !VOLTAGE_RANGE.contains(&hie_step) {
+            return Err(format!("UB Step value: {} V is out of range", hie_step));
+        }
+
+        if !CURRENT_RANGE.contains(&hre_current) {
+            return Err(format!(
+                "Reverse transfer base current: {} uA is out of range",
+                hre_current
+            ));
+        }
+        if !VOLTAGE_RANGE.contains(&hre_voltage) {
+            return Err(format!(
+                "Reverse transfer Collector-Emitter voltage: {} V is out of range",
+                hre_voltage
+            ));
+        }
+
+        if !CURRENT_RANGE.contains(&hfe_current1) {
+            return Err(format!(
+                "Forward gain base current (1): {} uA is out of range",
+                hfe_current1
+            ));
+        }
+        if !CURRENT_RANGE.contains(&hfe_current2) {
+            return Err(format!(
+                "Forward gain base current (2): {} uA is out of range",
+                hfe_current2
+            ));
+        }
+        if !VOLTAGE_RANGE.contains(&hfe_voltage) {
+            return Err(format!(
+                "Forward gain Collector-Emitter voltage: {} V is out of range",
+                hfe_voltage
+            ));
+        }
+
+        if !CURRENT_RANGE.contains(&hoe_current) {
+            return Err(format!(
+                "Output admittance base current: {} uA is out of range",
+                hoe_current
+            ));
+        }
+        if !VOLTAGE_RANGE.contains(&hoe_start) {
+            return Err(format!("UCE Start value: {} V is out of range", hoe_start));
+        }
+        if !VOLTAGE_RANGE.contains(&hoe_end) {
+            return Err(format!("UCE End value: {} V is out of range", hoe_end));
+        }
+        if !VOLTAGE_RANGE.contains(&hoe_step) {
+            return Err(format!("UCE Step value: {} V is out of range", hoe_step));
+        }
 
         Ok(Self {
             hie: InputImpedance {
