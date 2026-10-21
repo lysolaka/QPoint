@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio_serial::{ClearBuffer, SerialPort, SerialPortBuilderExt, SerialPortType, SerialStream};
+use tokio_serial::{SerialPortBuilderExt, SerialPortType, SerialStream};
 
 use qpoint_common::{Command, Response};
 
@@ -15,6 +15,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("The device is not found")]
     NotFound,
+    #[error("Unexpected response from the device")]
+    UnexpectedResponse,
 }
 
 #[derive(Debug)]
@@ -23,7 +25,7 @@ pub struct Device {
 }
 
 impl Device {
-    pub async fn attach() -> Result<Self, Error> {
+    pub fn connect() -> Result<Self, Error> {
         let device = tokio_serial::available_ports()?
             .into_iter()
             .find(|port| {
@@ -35,24 +37,30 @@ impl Device {
             .map(|port| port.port_name)
             .ok_or(Error::NotFound)?;
 
-        let mut port = tokio_serial::new(&device, 115200)
+        let port = tokio_serial::new(&device, 115200)
             .timeout(Duration::from_millis(500))
             .open_native_async()?;
-
-        let attach_cmd = postcard::to_stdvec_cobs(&Command::Lock)?;
-        port.write_all(&attach_cmd).await?;
 
         Ok(Self {
             port: BufReader::new(port),
         })
     }
 
-    pub async fn detach(&mut self) -> Result<(), Error> {
-        self.port.get_mut().clear(ClearBuffer::All)?;
-        let detach_cmd = postcard::to_stdvec_cobs(&Command::Unlock)?;
-        self.port.write_all(&detach_cmd).await?;
+    // TODO: acquire a semaphore on lock and release on unlock
+    pub async fn lock(&mut self) -> Result<(), Error> {
+        let r = self.transaction(Command::Lock).await?;
+        match r {
+            Response::Ack => Ok(()),
+            _ => Err(Error::UnexpectedResponse)
+        }
+    }
 
-        Ok(())
+    pub async fn unlock(&mut self) -> Result<(), Error> {
+        let r = self.transaction(Command::Unlock).await?;
+        match r {
+            Response::Ack => Ok(()),
+            _ => Err(Error::UnexpectedResponse)
+        }
     }
 
     pub async fn transaction(&mut self, cmd: Command) -> Result<Response, Error> {

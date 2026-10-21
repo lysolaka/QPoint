@@ -35,6 +35,7 @@ pub enum Message {
     MeasurementSelected(MeasurementType),
     LoadDefaults,
     StartMeasurement,
+    // TODO: DisplayAlert and schedule it as Task::done()
     OutputConfig(output_characteristics::Message),
     InputConfig(input_characteristics::Message),
     HybridConfig(hybrid_parameters::Message),
@@ -75,7 +76,9 @@ impl MainWindow {
                     crate::gui::alert(MessageLevel::Warning, "Select a measurement!");
                     Task::none()
                 } else {
-                    match self.prepare_measurement(self.measurement.unwrap()) {
+                    match self
+                        .prepare_measurement(self.measurement.unwrap(), self.transistor.unwrap())
+                    {
                         Ok(task) => task,
                         Err(e) => {
                             crate::gui::alert(MessageLevel::Error, e);
@@ -186,12 +189,26 @@ impl MainWindow {
         .into()
     }
 
-    fn prepare_measurement(&self, measurement: MeasurementType) -> Result<Task<Message>, String> {
+    fn prepare_measurement(
+        &self,
+        measurement: MeasurementType,
+        transistor: TransistorType,
+    ) -> Result<Task<Message>, String> {
         match measurement {
             MeasurementType::OutputCharacteristics => {
                 let params = self.output_config.parse()?;
-                println!("{:#?}", params);
-                Ok(Task::none())
+                eprintln!("Starting measurement ({:?}): {:#?}", transistor, params);
+
+                let task = match transistor {
+                    TransistorType::NPN => {
+                        Task::perform(params.measure_npn(), |r| eprintln!("{:?}", r)).discard()
+                    }
+                    TransistorType::PNP => {
+                        Task::perform(params.measure_pnp(), |r| eprintln!("{:?}", r)).discard()
+                    }
+                };
+
+                Ok(task)
             }
             MeasurementType::InputCharacteristics => {
                 let params = self.input_config.parse()?;

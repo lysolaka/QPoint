@@ -1,5 +1,12 @@
-use crate::measure::parse_val;
-use crate::measure::{CURRENT_RANGE, VOLTAGE_RANGE};
+use iter_num_tools::arange;
+
+use qpoint_common::measurement::{BaseSource, CollectorSource, EmitterSource};
+use qpoint_common::{Command, Response};
+
+use crate::com::{Device, Error};
+use crate::measure::CURRENT_RANGE;
+use crate::measure::VOLTAGE_RANGE;
+use crate::measure::{PlotData, parse_val};
 
 #[derive(Debug)]
 pub struct OutputCharacteristics {
@@ -53,5 +60,121 @@ impl OutputCharacteristics {
             uce_end: end,
             uce_step: step,
         })
+    }
+
+    pub async fn measure_npn(self) -> Result<PlotData, Error> {
+        let uce_sweep = arange(
+            self.uce_start..(self.uce_end + self.uce_step),
+            self.uce_step,
+        );
+
+        let mut plot_data = PlotData::new("Output Characteristics");
+
+        let mut dev = Device::connect()?;
+        dev.lock().await?;
+        // setup initial conditions
+        dev.transaction(Command::EmitterSelect(EmitterSource::GND))
+            .await?;
+        dev.transaction(Command::CollectorSelect(CollectorSource::VSource))
+            .await?;
+        dev.transaction(Command::BaseSelect(BaseSource::ISource))
+            .await?;
+
+        for cond in self.base_currents {
+            dev.transaction(Command::BaseSet {
+                value: cond,
+                measure: false,
+            })
+            .await?;
+            let mut series = Vec::with_capacity(uce_sweep.len());
+
+            for uce in uce_sweep.clone() {
+                let r = dev
+                    .transaction(Command::CollectorSet {
+                        value: uce,
+                        measure: true,
+                    })
+                    .await?;
+                match r {
+                    Response::Ack => return Err(Error::UnexpectedResponse),
+                    Response::Measurement(result) => {
+                        series.push((uce, result.collector_current));
+                    }
+                }
+            }
+
+            plot_data.push_series(format!("Ib = {} uA", cond), series);
+        }
+
+        dev.transaction(Command::BaseSelect(BaseSource::HighZ))
+            .await?;
+        dev.transaction(Command::CollectorSelect(CollectorSource::HighZ))
+            .await?;
+        dev.transaction(Command::EmitterSelect(EmitterSource::HighZ))
+            .await?;
+
+        dev.unlock().await?;
+        Ok(plot_data)
+    }
+
+    pub async fn measure_pnp(self) -> Result<PlotData, Error> {
+        let uce_sweep = arange(
+            self.uce_start..(self.uce_end + self.uce_step),
+            self.uce_step,
+        )
+        .rev();
+
+        let mut plot_data = PlotData::new("Output Characteristics");
+
+        let mut dev = Device::connect()?;
+        dev.lock().await?;
+        // setup initial conditions
+        dev.transaction(Command::EmitterSelect(EmitterSource::VCC))
+            .await?;
+        dev.transaction(Command::CollectorSelect(CollectorSource::VSource))
+            .await?;
+        dev.transaction(Command::CollectorSet {
+            value: 5.0,
+            measure: false,
+        })
+        .await?;
+        dev.transaction(Command::BaseSelect(BaseSource::ISink))
+            .await?;
+
+        for cond in self.base_currents {
+            dev.transaction(Command::BaseSet {
+                value: cond,
+                measure: false,
+            })
+            .await?;
+            let mut series = Vec::with_capacity(uce_sweep.len());
+
+            for uce in uce_sweep.clone() {
+                let r = dev
+                    .transaction(Command::CollectorSet {
+                        value: uce,
+                        measure: true,
+                    })
+                    .await?;
+                match r {
+                    Response::Ack => return Err(Error::UnexpectedResponse),
+                    Response::Measurement(result) => {
+                        series.push((uce - 5.0, result.collector_current));
+                    }
+                }
+            }
+
+            plot_data.push_series(format!("Ib = -{} uA", cond), series);
+        }
+
+        dev.transaction(Command::BaseSelect(BaseSource::HighZ))
+            .await?;
+        dev.transaction(Command::CollectorSelect(CollectorSource::HighZ))
+            .await?;
+        dev.transaction(Command::EmitterSelect(EmitterSource::HighZ))
+            .await?;
+
+        dev.unlock().await?;
+        Ok(plot_data)
     }
 }
