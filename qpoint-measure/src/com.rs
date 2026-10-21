@@ -13,7 +13,7 @@ pub enum Error {
     Serialization(#[from] postcard::Error),
     #[error("{0}")]
     Io(#[from] std::io::Error),
-    #[error("The device is not found")]
+    #[error("The device was not found")]
     NotFound,
     #[error("Unexpected response from the device")]
     UnexpectedResponse,

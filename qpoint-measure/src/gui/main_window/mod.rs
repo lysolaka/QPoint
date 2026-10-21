@@ -2,6 +2,9 @@ use iced::widget::{button, column, radio, row, rule, space, text};
 use iced::{Element, Length, Task};
 use native_dialog::MessageLevel;
 
+use crate::gui;
+use crate::measure::PlotData;
+
 mod hybrid_parameters;
 mod input_characteristics;
 mod output_characteristics;
@@ -35,7 +38,8 @@ pub enum Message {
     MeasurementSelected(MeasurementType),
     LoadDefaults,
     StartMeasurement,
-    // TODO: DisplayAlert and schedule it as Task::done()
+    DisplayAlert(MessageLevel, String),
+    OpenPlot(PlotData),
     OutputConfig(output_characteristics::Message),
     InputConfig(input_characteristics::Message),
     HybridConfig(hybrid_parameters::Message),
@@ -70,23 +74,30 @@ impl MainWindow {
             }
             Message::StartMeasurement => {
                 if self.transistor.is_none() {
-                    crate::gui::alert(MessageLevel::Warning, "Select a transistor type!");
-                    Task::none()
+                    Task::done(Message::DisplayAlert(
+                        MessageLevel::Warning,
+                        "Select a transistor type!".into(),
+                    ))
                 } else if self.measurement.is_none() {
-                    crate::gui::alert(MessageLevel::Warning, "Select a measurement!");
-                    Task::none()
+                    Task::done(Message::DisplayAlert(
+                        MessageLevel::Warning,
+                        "Select a measurement!".into(),
+                    ))
                 } else {
                     match self
                         .prepare_measurement(self.measurement.unwrap(), self.transistor.unwrap())
                     {
                         Ok(task) => task,
-                        Err(e) => {
-                            crate::gui::alert(MessageLevel::Error, e);
-                            Task::none()
-                        }
+                        Err(e) => Task::done(Message::DisplayAlert(MessageLevel::Error, e)),
                     }
                 }
             }
+            Message::DisplayAlert(level, message) => {
+                gui::alert(level, message);
+                Task::none()
+            }
+            // NOTE: handled outside via a special case
+            Message::OpenPlot(_) => unreachable!(),
             Message::OutputConfig(m) => {
                 self.output_config.update(m);
                 Task::none()
@@ -200,12 +211,20 @@ impl MainWindow {
                 eprintln!("Starting measurement ({:?}): {:#?}", transistor, params);
 
                 let task = match transistor {
-                    TransistorType::NPN => {
-                        Task::perform(params.measure_npn(), |r| eprintln!("{:?}", r)).discard()
-                    }
-                    TransistorType::PNP => {
-                        Task::perform(params.measure_pnp(), |r| eprintln!("{:?}", r)).discard()
-                    }
+                    TransistorType::NPN => Task::perform(params.measure_npn(), |r| match r {
+                        Ok(plot) => Message::OpenPlot(plot),
+                        Err(e) => Message::DisplayAlert(
+                            MessageLevel::Error,
+                            format!("Failed to measure: {}", e),
+                        ),
+                    }),
+                    TransistorType::PNP => Task::perform(params.measure_pnp(), |r| match r {
+                        Ok(plot) => Message::OpenPlot(plot),
+                        Err(e) => Message::DisplayAlert(
+                            MessageLevel::Error,
+                            format!("Failed to measure: {}", e),
+                        ),
+                    }),
                 };
 
                 Ok(task)
