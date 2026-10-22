@@ -164,7 +164,7 @@ impl OutputCharacteristics {
                 }
             }
 
-            plot_data.push_series(format!("Ib = -{} uA", cond), series);
+            plot_data.push_series(format!("Ib = {} uA", -cond), series);
         }
 
         dev.transaction(Command::BaseSelect(BaseSource::HighZ))

@@ -235,12 +235,22 @@ impl MainWindow {
             }
             MeasurementType::InputCharacteristics => {
                 let params = self.input_config.parse()?;
-                println!("{:#?}", params);
-                Task::none()
+                eprintln!("Starting measurement ({:?}): {:#?}", transistor, params);
+
+                match transistor {
+                    TransistorType::NPN => Task::perform(
+                        params.measure_npn(),
+                        measurement_done.with(Message::OpenPlot),
+                    ),
+                    TransistorType::PNP => Task::perform(
+                        params.measure_pnp(),
+                        measurement_done.with(Message::OpenPlot),
+                    ),
+                }
             }
             MeasurementType::HybridParameters => {
                 let params = self.hybrid_config.parse()?;
-                println!("{:#?}", params);
+                eprintln!("Starting measurement ({:?}): {:#?}", transistor, params);
                 Task::none()
             }
         };
