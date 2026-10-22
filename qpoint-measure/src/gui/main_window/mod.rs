@@ -1,7 +1,8 @@
 use iced::widget::{button, column, radio, row, rule, space, text};
-use iced::{Element, Length, Task};
+use iced::{Element, Function, Length, Task};
 use native_dialog::MessageLevel;
 
+use crate::com::Error;
 use crate::gui;
 use crate::measure::PlotData;
 
@@ -13,6 +14,7 @@ mod output_characteristics;
 pub struct MainWindow {
     transistor: Option<TransistorType>,
     measurement: Option<MeasurementType>,
+    start_ready: bool,
     output_config: output_characteristics::Config,
     input_config: input_characteristics::Config,
     hybrid_config: hybrid_parameters::Config,
@@ -38,6 +40,7 @@ pub enum Message {
     MeasurementSelected(MeasurementType),
     LoadDefaults,
     StartMeasurement,
+    StartReadyChanged(bool),
     DisplayAlert(MessageLevel, String),
     OpenPlot(PlotData),
     OutputConfig(output_characteristics::Message),
@@ -50,6 +53,7 @@ impl MainWindow {
         Self {
             transistor: None,
             measurement: None,
+            start_ready: true,
             output_config: output_characteristics::Config::new(),
             input_config: input_characteristics::Config::new(),
             hybrid_config: hybrid_parameters::Config::new(),
@@ -91,6 +95,10 @@ impl MainWindow {
                         Err(e) => Task::done(Message::DisplayAlert(MessageLevel::Error, e)),
                     }
                 }
+            }
+            Message::StartReadyChanged(v) => {
+                self.start_ready = v;
+                Task::none()
             }
             Message::DisplayAlert(level, message) => {
                 gui::alert(level, message);
@@ -166,8 +174,12 @@ impl MainWindow {
                 .on_press(Message::LoadDefaults),
             button(text("Start measurement").width(Length::Fill).center())
                 .width(Length::FillPortion(1))
-                .style(button::success)
-                .on_press(Message::StartMeasurement),
+                .style(if self.start_ready {
+                    button::success
+                } else {
+                    button::danger
+                })
+                .on_press_maybe(self.start_ready.then_some(Message::StartMeasurement)),
         ]
         .width(Length::Fill)
         .spacing(8)
@@ -205,40 +217,43 @@ impl MainWindow {
         measurement: MeasurementType,
         transistor: TransistorType,
     ) -> Result<Task<Message>, String> {
-        match measurement {
+        let measurement_task = match measurement {
             MeasurementType::OutputCharacteristics => {
                 let params = self.output_config.parse()?;
                 eprintln!("Starting measurement ({:?}): {:#?}", transistor, params);
 
-                let task = match transistor {
-                    TransistorType::NPN => Task::perform(params.measure_npn(), |r| match r {
-                        Ok(plot) => Message::OpenPlot(plot),
-                        Err(e) => Message::DisplayAlert(
-                            MessageLevel::Error,
-                            format!("Failed to measure: {}", e),
-                        ),
-                    }),
-                    TransistorType::PNP => Task::perform(params.measure_pnp(), |r| match r {
-                        Ok(plot) => Message::OpenPlot(plot),
-                        Err(e) => Message::DisplayAlert(
-                            MessageLevel::Error,
-                            format!("Failed to measure: {}", e),
-                        ),
-                    }),
-                };
-
-                Ok(task)
+                match transistor {
+                    TransistorType::NPN => Task::perform(
+                        params.measure_npn(),
+                        measurement_done.with(Message::OpenPlot),
+                    ),
+                    TransistorType::PNP => Task::perform(
+                        params.measure_pnp(),
+                        measurement_done.with(Message::OpenPlot),
+                    ),
+                }
             }
             MeasurementType::InputCharacteristics => {
                 let params = self.input_config.parse()?;
                 println!("{:#?}", params);
-                Ok(Task::none())
+                Task::none()
             }
             MeasurementType::HybridParameters => {
                 let params = self.hybrid_config.parse()?;
                 println!("{:#?}", params);
-                Ok(Task::none())
+                Task::none()
             }
-        }
+        };
+
+        Ok(Task::done(Message::StartReadyChanged(false))
+            .chain(measurement_task)
+            .chain(Task::done(Message::StartReadyChanged(true))))
+    }
+}
+
+fn measurement_done<A>(f: impl FnOnce(A) -> Message, r: Result<A, Error>) -> Message {
+    match r {
+        Ok(a) => f(a),
+        Err(e) => Message::DisplayAlert(MessageLevel::Error, format!("Failed to measure: {}", e)),
     }
 }
