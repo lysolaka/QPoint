@@ -69,6 +69,8 @@ impl InputCharacteristics {
 
         let mut plot_data = PlotData::new(
             "Input Characteristics",
+            "Base Voltage [V]",
+            "Base Current [uA]",
             ub_sweep.clone().collect(),
             self.ce_voltages.len(),
         );
@@ -126,6 +128,8 @@ impl InputCharacteristics {
 
         let mut plot_data = PlotData::new(
             "Input Characteristics",
+            "Base Voltage [V]",
+            "Base Current [uA]",
             ub_sweep.clone().collect(),
             self.ce_voltages.len(),
         );

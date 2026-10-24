@@ -67,9 +67,8 @@ impl App {
                 }
             }
             Message::MainWindow(main_window::Message::OpenPlot(plot_data)) => {
-                eprintln!("{:?}", plot_data);
                 let (id, open) = window::open(Settings {
-                    size: Size::new(512.0, 512.0),
+                    size: Size::new(1288.0, 900.0),
                     ..Settings::default()
                 });
 
@@ -80,10 +79,10 @@ impl App {
             Message::MainWindow(m) => self.window_state.update(m).map(Message::MainWindow),
             Message::PlotWindow(id, m) => {
                 if let Some(window) = self.plot_windows.get_mut(&id) {
-                    window.update(m);
+                    window.update(m).map(Message::PlotWindow.with(id))
+                } else {
+                    Task::none()
                 }
-
-                Task::none()
             }
         }
     }

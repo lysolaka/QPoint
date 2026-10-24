@@ -70,6 +70,8 @@ impl OutputCharacteristics {
 
         let mut plot_data = PlotData::new(
             "Output Characteristics",
+            "Collector-Emitter Voltage [V]",
+            "Collector Current [mA]",
             uce_sweep.clone().collect(),
             self.base_currents.len(),
         );
@@ -130,6 +132,8 @@ impl OutputCharacteristics {
 
         let mut plot_data = PlotData::new(
             "Output Characteristics",
+            "Collector-Emitter Voltage [V]",
+            "Collector Current [mA]",
             uce_sweep.clone().map(|x| x - 5.0).collect(),
             self.base_currents.len()
         );
