@@ -15,7 +15,11 @@ fn alert(level: MessageLevel, message: impl ToString) {
         .unwrap();
 }
 
-async fn save_file(content: String, filter: &str, extensions: impl AsRef<[&str]>) -> Result<(), String> {
+async fn save_file(
+    content: String,
+    filter: &str,
+    extensions: impl AsRef<[&str]>,
+) -> Result<(), String> {
     let path = DialogBuilder::file()
         .set_title("QPoint Measure: Save plot image")
         .add_filter(filter, extensions)
@@ -25,7 +29,9 @@ async fn save_file(content: String, filter: &str, extensions: impl AsRef<[&str]>
         .unwrap();
 
     if let Some(p) = path {
-        fs::write(p, content).await.map_err(|e| e.to_string())
+        fs::write(&p, content)
+            .await
+            .map_err(|e| format!("Failed to write {}: {}", p.display(), e))
     } else {
         Ok(())
     }

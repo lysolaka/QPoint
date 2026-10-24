@@ -55,6 +55,34 @@ impl PlotData {
         self.y_axes.push((name.into(), data));
     }
 
+    pub fn write_csv(&self) -> Result<String, Box<dyn std::error::Error>> {
+        let mut wtr = csv::WriterBuilder::new()
+            .delimiter(b';')
+            .flexible(true)
+            .from_writer(Vec::new());
+
+        wtr.write_record(["# Title", &self.title])?;
+        wtr.write_record(["# X axis", &self.x_label])?;
+        wtr.write_record(["# Y axis", &self.y_label])?;
+
+        let mut headers = vec![""]; // first header empty
+        headers.extend(self.y_axes.iter().map(|(name, _)| name.as_str()));
+        wtr.write_record(headers)?;
+
+        for (i, x) in self.x_axis.iter().enumerate() {
+            let mut row = Vec::with_capacity(1 + self.y_axes.len());
+            row.push(x.to_string());
+
+            for (_, values) in &self.y_axes {
+                row.push(values[i].to_string());
+            }
+
+            wtr.write_record(row)?;
+        }
+
+        Ok(String::from_utf8(wtr.into_inner()?)?)
+    }
+
     pub fn render_svg(&self) -> String {
         let plots: Vec<_> = self
             .y_axes

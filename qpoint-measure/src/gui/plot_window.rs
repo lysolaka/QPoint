@@ -34,13 +34,16 @@ impl PlotWindow {
                 gui::alert(level, message);
                 Task::none()
             }
-            Message::SaveCSV => todo!(),
+            Message::SaveCSV => match self.data.write_csv() {
+                Ok(data) => Task::future(gui::save_file(data, "CSV", [".csv"])).then(ok_or_alert),
+                Err(e) => Task::done(Message::DisplayAlert(
+                    MessageLevel::Error,
+                    format!("Failed to prepare data: {}", e),
+                )),
+            },
             Message::SaveSVG => {
                 let image = self.data.render_svg();
-                Task::future(gui::save_file(image, "SVG", [".svg"])).then(|r| match r {
-                    Ok(_) => Task::none(),
-                    Err(e) => Task::done(Message::DisplayAlert(MessageLevel::Error, e)),
-                })
+                Task::future(gui::save_file(image, "SVG", [".svg"])).then(ok_or_alert)
             }
         }
     }
@@ -68,5 +71,12 @@ impl PlotWindow {
             .spacing(4)
             .padding(4)
             .into()
+    }
+}
+
+fn ok_or_alert(r: Result<(), String>) -> Task<Message> {
+    match r {
+        Ok(_) => Task::none(),
+        Err(e) => Task::done(Message::DisplayAlert(MessageLevel::Error, e)),
     }
 }
