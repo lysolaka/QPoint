@@ -67,7 +67,11 @@ impl InputCharacteristics {
     pub async fn measure_npn(self) -> Result<PlotData, Error> {
         let ub_sweep = arange(self.ub_start..(self.ub_end + self.ub_step), self.ub_step);
 
-        let mut plot_data = PlotData::new("Input Characteristics");
+        let mut plot_data = PlotData::new(
+            "Input Characteristics",
+            ub_sweep.clone().collect(),
+            self.ce_voltages.len(),
+        );
 
         let mut dev = Device::connect()?;
         dev.lock().await?;
@@ -97,8 +101,8 @@ impl InputCharacteristics {
                 match r {
                     Response::Ack => return Err(Error::UnexpectedResponse),
                     Response::Measurement(result) => {
-                        let ib = (ub - result.base_voltage) / 15.0;
-                        series.push((ub, ib));
+                        let ib = ((ub * 1000.0) - result.base_voltage) / 15.0;
+                        series.push(ib);
                     }
                 }
             }
@@ -118,9 +122,13 @@ impl InputCharacteristics {
     }
 
     pub async fn measure_pnp(self) -> Result<PlotData, Error> {
-        let ub_sweep = arange(self.ub_start..(self.ub_end + self.ub_step), self.ub_step);
+        let ub_sweep = arange(self.ub_start..(self.ub_end + self.ub_step), self.ub_step).rev();
 
-        let mut plot_data = PlotData::new("Input Characteristics");
+        let mut plot_data = PlotData::new(
+            "Input Characteristics",
+            ub_sweep.clone().collect(),
+            self.ce_voltages.len(),
+        );
 
         let mut dev = Device::connect()?;
         dev.lock().await?;
@@ -129,10 +137,18 @@ impl InputCharacteristics {
             .await?;
         dev.transaction(Command::CollectorSelect(CollectorSource::VSource))
             .await?;
-        dev.transaction(Command::CollectorSet { value: 5.0, measure: false }).await?;
+        dev.transaction(Command::CollectorSet {
+            value: 5.0,
+            measure: false,
+        })
+        .await?;
         dev.transaction(Command::BaseSelect(BaseSource::VSource))
             .await?;
-        dev.transaction(Command::BaseSet { value: 5.0, measure: false }).await?;
+        dev.transaction(Command::BaseSet {
+            value: 5.0,
+            measure: false,
+        })
+        .await?;
 
         for cond in self.ce_voltages {
             dev.transaction(Command::CollectorSet {
@@ -145,15 +161,15 @@ impl InputCharacteristics {
             for ub in ub_sweep.clone() {
                 let r = dev
                     .transaction(Command::BaseSet {
-                        value: 5.0 - ub,
+                        value: ub,
                         measure: true,
                     })
                     .await?;
                 match r {
                     Response::Ack => return Err(Error::UnexpectedResponse),
                     Response::Measurement(result) => {
-                        let ib = (ub - result.base_voltage) / 15.0;
-                        series.push((ub, ib));
+                        let ib = ((ub * 1000.0) - result.base_voltage) / 15.0;
+                        series.push(ib);
                     }
                 }
             }
@@ -171,5 +187,4 @@ impl InputCharacteristics {
         dev.unlock().await?;
         Ok(plot_data)
     }
-
 }

@@ -68,7 +68,11 @@ impl OutputCharacteristics {
             self.uce_step,
         );
 
-        let mut plot_data = PlotData::new("Output Characteristics");
+        let mut plot_data = PlotData::new(
+            "Output Characteristics",
+            uce_sweep.clone().collect(),
+            self.base_currents.len(),
+        );
 
         let mut dev = Device::connect()?;
         dev.lock().await?;
@@ -98,7 +102,7 @@ impl OutputCharacteristics {
                 match r {
                     Response::Ack => return Err(Error::UnexpectedResponse),
                     Response::Measurement(result) => {
-                        series.push((uce, result.collector_current));
+                        series.push(result.collector_current);
                     }
                 }
             }
@@ -124,7 +128,11 @@ impl OutputCharacteristics {
         )
         .rev();
 
-        let mut plot_data = PlotData::new("Output Characteristics");
+        let mut plot_data = PlotData::new(
+            "Output Characteristics",
+            uce_sweep.clone().map(|x| x - 5.0).collect(),
+            self.base_currents.len()
+        );
 
         let mut dev = Device::connect()?;
         dev.lock().await?;
@@ -159,7 +167,7 @@ impl OutputCharacteristics {
                 match r {
                     Response::Ack => return Err(Error::UnexpectedResponse),
                     Response::Measurement(result) => {
-                        series.push((uce - 5.0, result.collector_current));
+                        series.push(result.collector_current);
                     }
                 }
             }

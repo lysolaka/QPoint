@@ -2,7 +2,6 @@
 // TODO: make code alive
 #![allow(dead_code)]
 
-use std::collections::HashMap;
 use std::ops::RangeInclusive;
 
 mod hparam;
@@ -26,18 +25,20 @@ fn parse_val(v: &str, name: &str) -> Result<f32, String> {
 #[derive(Clone, Debug)]
 pub struct PlotData {
     title: String,
-    data: HashMap<String, Vec<(f32, f32)>>,
+    x_axis: Vec<f32>,
+    y_axes: Vec<(String, Vec<f32>)>,
 }
 
 impl PlotData {
-    pub fn new(title: impl ToString) -> Self {
+    pub fn new(title: impl Into<String>, x_axis: Vec<f32>, y_elements: usize) -> Self {
         Self {
-            title: title.to_string(),
-            data: HashMap::new(),
+            title: title.into(),
+            x_axis,
+            y_axes: Vec::with_capacity(y_elements),
         }
     }
 
-    pub fn push_series(&mut self, name: impl ToString, data: Vec<(f32, f32)>) {
-        self.data.insert(name.to_string(), data);
+    pub fn push_series(&mut self, name: impl Into<String>, data: Vec<f32>) {
+        self.y_axes.push((name.into(), data));
     }
 }
