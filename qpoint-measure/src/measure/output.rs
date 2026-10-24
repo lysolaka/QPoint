@@ -72,7 +72,6 @@ impl OutputCharacteristics {
             "Output Characteristics",
             "Collector-Emitter Voltage [V]",
             "Collector Current [mA]",
-            uce_sweep.clone().collect(),
             self.base_currents.len(),
         );
 
@@ -104,7 +103,7 @@ impl OutputCharacteristics {
                 match r {
                     Response::Ack => return Err(Error::UnexpectedResponse),
                     Response::Measurement(result) => {
-                        series.push(result.collector_current);
+                        series.push((uce, result.collector_current));
                     }
                 }
             }
@@ -134,8 +133,7 @@ impl OutputCharacteristics {
             "Output Characteristics",
             "Collector-Emitter Voltage [V]",
             "Collector Current [mA]",
-            uce_sweep.clone().map(|x| x - 5.0).collect(),
-            self.base_currents.len()
+            self.base_currents.len(),
         );
 
         let mut dev = Device::connect()?;
@@ -164,14 +162,14 @@ impl OutputCharacteristics {
             for uce in uce_sweep.clone() {
                 let r = dev
                     .transaction(Command::CollectorSet {
-                        value: uce,
+                        value: 5.0 - uce,
                         measure: true,
                     })
                     .await?;
                 match r {
                     Response::Ack => return Err(Error::UnexpectedResponse),
                     Response::Measurement(result) => {
-                        series.push(result.collector_current);
+                        series.push((-uce, result.collector_current));
                     }
                 }
             }

@@ -2,7 +2,6 @@
 // TODO: make code alive
 #![allow(dead_code)]
 
-use std::iter;
 use std::ops::RangeInclusive;
 
 use kuva::prelude::*;
@@ -30,8 +29,13 @@ pub struct PlotData {
     title: String,
     x_label: String,
     y_label: String,
-    x_axis: Vec<f32>,
-    y_axes: Vec<(String, Vec<f32>)>,
+    series: Vec<PlotSeries>,
+}
+
+#[derive(Clone, Debug)]
+pub struct PlotSeries {
+    pub name: String,
+    pub points: Vec<(f32, f32)>,
 }
 
 impl PlotData {
@@ -39,45 +43,34 @@ impl PlotData {
         title: impl Into<String>,
         x_label: impl Into<String>,
         y_label: impl Into<String>,
-        x_axis: Vec<f32>,
-        y_elements: usize,
+        num_series: usize,
     ) -> Self {
         Self {
             title: title.into(),
             x_label: x_label.into(),
             y_label: y_label.into(),
-            x_axis,
-            y_axes: Vec::with_capacity(y_elements),
+            series: Vec::with_capacity(num_series),
         }
     }
 
-    pub fn push_series(&mut self, name: impl Into<String>, data: Vec<f32>) {
-        self.y_axes.push((name.into(), data));
+    pub fn push_series(&mut self, name: impl Into<String>, points: Vec<(f32, f32)>) {
+        self.series.push(PlotSeries {
+            name: name.into(),
+            points,
+        });
     }
 
     pub fn write_csv(&self) -> Result<String, Box<dyn std::error::Error>> {
         let mut wtr = csv::WriterBuilder::new()
             .delimiter(b';')
-            .flexible(true)
             .from_writer(Vec::new());
 
-        wtr.write_record(["# Title", &self.title])?;
-        wtr.write_record(["# X axis", &self.x_label])?;
-        wtr.write_record(["# Y axis", &self.y_label])?;
+        wtr.write_record(["Series", &self.x_label, &self.y_label])?;
 
-        let mut headers = vec![""]; // first header empty
-        headers.extend(self.y_axes.iter().map(|(name, _)| name.as_str()));
-        wtr.write_record(headers)?;
-
-        for (i, x) in self.x_axis.iter().enumerate() {
-            let mut row = Vec::with_capacity(1 + self.y_axes.len());
-            row.push(x.to_string());
-
-            for (_, values) in &self.y_axes {
-                row.push(values[i].to_string());
+        for series in &self.series {
+            for (x, y) in &series.points {
+                wtr.write_record([series.name.as_str(), &x.to_string(), &y.to_string()])?;
             }
-
-            wtr.write_record(row)?;
         }
 
         Ok(String::from_utf8(wtr.into_inner()?)?)
@@ -85,20 +78,20 @@ impl PlotData {
 
     pub fn render_svg(&self) -> String {
         let plots: Vec<_> = self
-            .y_axes
+            .series
             .iter()
-            .map(|(title, data)| {
-                let points = iter::zip(self.x_axis.iter().copied(), data.iter().copied());
+            .map(|series| {
+                let points = series.points.iter().copied();
 
-                LinePlot::new().with_data(points).with_legend(title)
+                LinePlot::new().with_data(points).with_legend(&series.name)
             })
             .map(Plot::Line)
             .collect();
 
         let (x_min, x_max) = self
-            .x_axis
+            .series
             .iter()
-            .copied()
+            .flat_map(|series| series.points.iter().map(|(x, _)| *x))
             .fold((f32::INFINITY, f32::NEG_INFINITY), |(min, max), x| {
                 (min.min(x), max.max(x))
             });

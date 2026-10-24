@@ -69,9 +69,8 @@ impl InputCharacteristics {
 
         let mut plot_data = PlotData::new(
             "Input Characteristics",
-            "Base Voltage [V]",
+            "Base-Emitter Voltage [mV]",
             "Base Current [uA]",
-            ub_sweep.clone().collect(),
             self.ce_voltages.len(),
         );
 
@@ -104,7 +103,7 @@ impl InputCharacteristics {
                     Response::Ack => return Err(Error::UnexpectedResponse),
                     Response::Measurement(result) => {
                         let ib = ((ub * 1000.0) - result.base_voltage) / 15.0;
-                        series.push(ib);
+                        series.push((result.base_voltage, ib));
                     }
                 }
             }
@@ -128,9 +127,8 @@ impl InputCharacteristics {
 
         let mut plot_data = PlotData::new(
             "Input Characteristics",
-            "Base Voltage [V]",
+            "Base-Emitter Voltage [mV]",
             "Base Current [uA]",
-            ub_sweep.clone().collect(),
             self.ce_voltages.len(),
         );
 
@@ -173,7 +171,7 @@ impl InputCharacteristics {
                     Response::Ack => return Err(Error::UnexpectedResponse),
                     Response::Measurement(result) => {
                         let ib = ((ub * 1000.0) - result.base_voltage) / 15.0;
-                        series.push(ib);
+                        series.push((result.base_voltage - 5000.0, ib));
                     }
                 }
             }
