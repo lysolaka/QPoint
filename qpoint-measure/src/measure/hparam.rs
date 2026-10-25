@@ -203,7 +203,7 @@ impl InputImpedance {
             }
         }
 
-        let lin_segment = LinearSegment::find(&data, 5, 0.01, 0.05);
+        let lin_segment = LinearSegment::find(&data, 5, 0.1, 0.05);
 
         Ok(lin_segment.map(|v| v.slope))
     }
@@ -235,7 +235,7 @@ impl InputImpedance {
             }
         }
 
-        let lin_segment = LinearSegment::find(&data, 5, 0.01, 0.05);
+        let lin_segment = LinearSegment::find(&data, 5, 0.1, 0.05);
 
         Ok(lin_segment.map(|v| v.slope))
     }
@@ -359,7 +359,7 @@ impl ForwardGain {
             Response::Measurement(result) => result.collector_current,
         };
 
-        Ok((ic2 - ic1) / (self.base_current2 - self.base_current1))
+        Ok(1000.0 * (ic2 - ic1) / (self.base_current2 - self.base_current1))
     }
 
     async fn measure_pnp(&self, dev: &mut Device) -> Result<f32, Error> {
