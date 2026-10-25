@@ -11,6 +11,7 @@ mod measure;
 
 use crate::gui::main_window::{self, MainWindow};
 use crate::gui::plot_window::{self, PlotWindow};
+use crate::gui::result_window::{self, ResultWindow};
 
 fn main() -> iced::Result {
     iced::daemon(App::new, App::update, App::view)
@@ -25,7 +26,7 @@ struct App {
     window_state: MainWindow,
 
     plot_windows: HashMap<window::Id, PlotWindow>,
-    result_windows: HashMap<window::Id, Box<u32>>,
+    result_windows: HashMap<window::Id, ResultWindow>,
 }
 
 #[derive(Debug, Clone)]
@@ -34,6 +35,7 @@ enum Message {
     WindowClosed(window::Id),
     MainWindow(main_window::Message),
     PlotWindow(window::Id, plot_window::Message),
+    ResultWindow(window::Id, result_window::Message),
 }
 
 impl App {
@@ -76,13 +78,27 @@ impl App {
 
                 open.map(Message::WindowOpened)
             }
-            Message::MainWindow(main_window::Message::OpenResults(hybrid_matrix)) => {
-                todo!()
+            Message::MainWindow(main_window::Message::OpenResults(results)) => {
+                let (id, open) = window::open(Settings {
+                    size: Size::new(512.0, 252.0),
+                    ..Settings::default()
+                });
+
+                self.result_windows.insert(id, ResultWindow::new(results));
+
+                open.map(Message::WindowOpened)
             }
             Message::MainWindow(m) => self.window_state.update(m).map(Message::MainWindow),
             Message::PlotWindow(id, m) => {
                 if let Some(window) = self.plot_windows.get_mut(&id) {
                     window.update(m).map(Message::PlotWindow.with(id))
+                } else {
+                    Task::none()
+                }
+            }
+            Message::ResultWindow(id, m) => {
+                if let Some(window) = self.result_windows.get_mut(&id) {
+                    window.update(m).map(Message::ResultWindow.with(id))
                 } else {
                     Task::none()
                 }
@@ -95,8 +111,8 @@ impl App {
             self.window_state.view().map(Message::MainWindow)
         } else if let Some(window) = self.plot_windows.get(&window_id) {
             window.view().map(Message::PlotWindow.with(window_id))
-        } else if let Some(_window) = self.result_windows.get(&window_id) {
-            todo!()
+        } else if let Some(window) = self.result_windows.get(&window_id) {
+            window.view().map(Message::ResultWindow.with(window_id))
         } else {
             iced::widget::space().into()
         }

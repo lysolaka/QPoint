@@ -4,6 +4,7 @@ use tokio::fs;
 
 pub mod main_window;
 pub mod plot_window;
+pub mod result_window;
 
 fn alert(level: MessageLevel, message: impl ToString) {
     DialogBuilder::message()
