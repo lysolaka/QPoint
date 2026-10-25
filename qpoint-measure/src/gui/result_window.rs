@@ -22,12 +22,12 @@ impl ResultWindow {
     pub fn new(results: HybridMatrix) -> Self {
         let hie = results
             .hie
-            .map_or_else(|| String::from("Failed!"), |v| format!("{:+09}", v));
-        let hre = format!("{:+09}", results.hre);
-        let hfe = format!("{:+09}", results.hfe);
+            .map_or_else(|| String::from("Failed!"), |v| format!("{:+04.6}", v));
+        let hre = format!("{:+04.6}", results.hre);
+        let hfe = format!("{:+04.6}", results.hfe);
         let hoe = results
             .hoe
-            .map_or_else(|| String::from("Failed!"), |v| format!("{:+09}", v));
+            .map_or_else(|| String::from("Failed!"), |v| format!("{:+04.6}", v));
 
         Self {
             results,
