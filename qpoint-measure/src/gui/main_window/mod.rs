@@ -4,7 +4,7 @@ use native_dialog::MessageLevel;
 
 use crate::com::Error;
 use crate::gui;
-use crate::measure::PlotData;
+use crate::measure::{HybridMatrix, PlotData};
 
 mod hybrid_parameters;
 mod input_characteristics;
@@ -43,6 +43,7 @@ pub enum Message {
     StartReadyChanged(bool),
     DisplayAlert(MessageLevel, String),
     OpenPlot(PlotData),
+    OpenResults(HybridMatrix),
     OutputConfig(output_characteristics::Message),
     InputConfig(input_characteristics::Message),
     HybridConfig(hybrid_parameters::Message),
@@ -106,6 +107,8 @@ impl MainWindow {
             }
             // NOTE: handled outside via a special case
             Message::OpenPlot(_) => unreachable!(),
+            // NOTE: handled outside via a special case
+            Message::OpenResults(_) => unreachable!(),
             Message::OutputConfig(m) => {
                 self.output_config.update(m);
                 Task::none()
@@ -251,7 +254,17 @@ impl MainWindow {
             MeasurementType::HybridParameters => {
                 let params = self.hybrid_config.parse()?;
                 eprintln!("Starting measurement ({:?}): {:#?}", transistor, params);
-                Task::none()
+
+                match transistor {
+                    TransistorType::NPN => Task::perform(
+                        params.measure_npn(),
+                        measurement_done.with(Message::OpenResults),
+                    ),
+                    TransistorType::PNP => Task::perform(
+                        params.measure_pnp(),
+                        measurement_done.with(Message::OpenResults),
+                    ),
+                }
             }
         };
 

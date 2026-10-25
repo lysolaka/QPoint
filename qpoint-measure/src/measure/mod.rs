@@ -1,7 +1,3 @@
-// suppress warnings for now
-// TODO: make code alive
-#![allow(dead_code)]
-
 use std::ops::RangeInclusive;
 
 use kuva::prelude::*;
@@ -22,6 +18,14 @@ const CURRENT_RANGE: RangeInclusive<f32> = 0.0..=150.0;
 fn parse_val(v: &str, name: &str) -> Result<f32, String> {
     v.parse()
         .map_err(|e| format!("Failed to parse {} value `{}`: {}", name, v, e))
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct HybridMatrix {
+    pub hie: Option<f64>,
+    pub hre: f32,
+    pub hfe: f32,
+    pub hoe: Option<f64>,
 }
 
 #[derive(Clone, Debug)]

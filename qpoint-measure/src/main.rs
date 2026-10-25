@@ -76,6 +76,9 @@ impl App {
 
                 open.map(Message::WindowOpened)
             }
+            Message::MainWindow(main_window::Message::OpenResults(hybrid_matrix)) => {
+                todo!()
+            }
             Message::MainWindow(m) => self.window_state.update(m).map(Message::MainWindow),
             Message::PlotWindow(id, m) => {
                 if let Some(window) = self.plot_windows.get_mut(&id) {
