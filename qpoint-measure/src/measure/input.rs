@@ -123,7 +123,7 @@ impl InputCharacteristics {
     }
 
     pub async fn measure_pnp(self) -> Result<PlotData, Error> {
-        let ub_sweep = arange(self.ub_start..(self.ub_end + self.ub_step), self.ub_step).rev();
+        let ub_sweep = arange(self.ub_start..(self.ub_end + self.ub_step), self.ub_step);
 
         let mut plot_data = PlotData::new(
             "Input Characteristics",

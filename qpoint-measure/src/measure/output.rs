@@ -126,8 +126,7 @@ impl OutputCharacteristics {
         let uce_sweep = arange(
             self.uce_start..(self.uce_end + self.uce_step),
             self.uce_step,
-        )
-        .rev();
+        );
 
         let mut plot_data = PlotData::new(
             "Output Characteristics",

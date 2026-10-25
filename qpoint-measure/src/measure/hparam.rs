@@ -396,7 +396,7 @@ impl ForwardGain {
             Response::Measurement(result) => result.collector_current,
         };
 
-        Ok((ic2 - ic1) / (self.base_current1 - self.base_current2))
+        Ok(1000.0 * (ic2 - ic1) / (self.base_current2 - self.base_current1))
     }
 }
 
@@ -452,8 +452,7 @@ impl OutputAdmittance {
         let uce_sweep = arange(
             self.uce_start..(self.uce_end + self.uce_step),
             self.uce_step,
-        )
-        .rev();
+        );
 
         dev.transaction(Command::EmitterSelect(EmitterSource::VCC))
             .await?;
