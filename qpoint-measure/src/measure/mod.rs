@@ -42,6 +42,34 @@ pub struct PlotSeries {
     pub points: Vec<(f32, f32)>,
 }
 
+impl HybridMatrix {
+    pub fn write_csv(&self) -> Result<String, Box<dyn std::error::Error>> {
+        let mut wtr = csv::WriterBuilder::new()
+            .delimiter(b';')
+            .from_writer(Vec::new());
+
+        wtr.write_record([
+            "Input Impedance [\u{03a9}]",
+            "Reverse Voltage Transfer",
+            "Forward Current Gain",
+            "Output Admittance [S]",
+        ])?;
+
+        let hie = self
+            .hie
+            .map_or_else(|| String::from("?"), |v| format!("{:+04.6}", v));
+        let hre = format!("{:+04.6}", self.hre);
+        let hfe = format!("{:+04.6}", self.hfe);
+        let hoe = self
+            .hoe
+            .map_or_else(|| String::from("?"), |v| format!("{:+04.6}", v));
+
+        wtr.write_record([hie, hre, hfe, hoe])?;
+
+        Ok(String::from_utf8(wtr.into_inner()?)?)
+    }
+}
+
 impl PlotData {
     pub fn new(
         title: impl Into<String>,
