@@ -8,12 +8,15 @@ use iced::{Element, Function, Size, Subscription, Task};
 mod com;
 mod gui;
 mod measure;
+mod logger;
 
 use crate::gui::main_window::{self, MainWindow};
 use crate::gui::plot_window::{self, PlotWindow};
 use crate::gui::result_window::{self, ResultWindow};
 
 fn main() -> iced::Result {
+    logger::init();
+
     iced::daemon(App::new, App::update, App::view)
         .subscription(App::subscription)
         .title("QPoint Measure")
@@ -69,6 +72,7 @@ impl App {
                 }
             }
             Message::MainWindow(main_window::Message::OpenPlot(plot_data)) => {
+                log::info!(note = "this may take some time"; "opening plot window");
                 let (id, open) = window::open(Settings {
                     size: Size::new(1288.0, 900.0),
                     ..Settings::default()
@@ -79,6 +83,7 @@ impl App {
                 open.map(Message::WindowOpened)
             }
             Message::MainWindow(main_window::Message::OpenResults(results)) => {
+                log::info!("opening results window");
                 let (id, open) = window::open(Settings {
                     size: Size::new(512.0, 252.0),
                     ..Settings::default()

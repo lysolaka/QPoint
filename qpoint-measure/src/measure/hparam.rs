@@ -65,39 +65,39 @@ impl HybridParameters {
 
         if !CURRENT_RANGE.contains(&hre_current) {
             return Err(format!(
-                "Reverse transfer base current: {} uA is out of range",
+                "reverse transfer base current: {} uA is out of range",
                 hre_current
             ));
         }
         if !VOLTAGE_RANGE.contains(&hre_voltage) {
             return Err(format!(
-                "Reverse transfer Collector-Emitter voltage: {} V is out of range",
+                "reverse transfer Collector-Emitter voltage: {} V is out of range",
                 hre_voltage
             ));
         }
 
         if !CURRENT_RANGE.contains(&hfe_current1) {
             return Err(format!(
-                "Forward gain base current (1): {} uA is out of range",
+                "forward gain base current (1): {} uA is out of range",
                 hfe_current1
             ));
         }
         if !CURRENT_RANGE.contains(&hfe_current2) {
             return Err(format!(
-                "Forward gain base current (2): {} uA is out of range",
+                "forward gain base current (2): {} uA is out of range",
                 hfe_current2
             ));
         }
         if !VOLTAGE_RANGE.contains(&hfe_voltage) {
             return Err(format!(
-                "Forward gain Collector-Emitter voltage: {} V is out of range",
+                "forward gain Collector-Emitter voltage: {} V is out of range",
                 hfe_voltage
             ));
         }
 
         if !CURRENT_RANGE.contains(&hoe_current) {
             return Err(format!(
-                "Output admittance base current: {} uA is out of range",
+                "output admittance base current: {} uA is out of range",
                 hoe_current
             ));
         }
@@ -136,6 +136,13 @@ impl HybridParameters {
     }
 
     pub async fn measure_npn(self) -> Result<HybridMatrix, Error> {
+        log::info!(
+            data:? = &self,
+            note = "transistor type: NPN",
+            note = "this may take some time",
+            note = "this time depends on the number of conditions and voltages to step through";
+            "starting hybrid parameters measurement"
+        );
         let mut dev = Device::connect()?;
         dev.lock().await?;
 
@@ -152,6 +159,13 @@ impl HybridParameters {
     }
 
     pub async fn measure_pnp(self) -> Result<HybridMatrix, Error> {
+        log::info!(
+            data:? = &self,
+            note = "transistor type: PNP",
+            note = "this may take some time",
+            note = "this time depends on the number of conditions and voltages to step through";
+            "starting hybrid parameters measurement"
+        );
         let mut dev = Device::connect()?;
         dev.lock().await?;
 
@@ -177,6 +191,7 @@ struct InputImpedance {
 
 impl InputImpedance {
     async fn measure_npn(&self, dev: &mut Device) -> Result<Option<f64>, Error> {
+        log::info!("measuring input impedance");
         let ub_sweep = arange(self.ub_start..(self.ub_end + self.ub_step), self.ub_step);
 
         dev.transaction(Command::EmitterSelect(EmitterSource::GND))
@@ -205,11 +220,17 @@ impl InputImpedance {
 
         let lin_segment = LinearSegment::find(&data, 5, 0.1, 0.05);
 
+        match lin_segment {
+            Some(v) => log::info!(data:? = v; "input impedance slope:"),
+            None => log::warn!("couldn't determine input impedance from the input characteristic"),
+        }
+
         // NOTE: since the graph is I = f(U) the slope is in units of I/U [S], but we need U/I [ohms]
         Ok(lin_segment.map(|v| v.slope.recip()))
     }
 
     async fn measure_pnp(&self, dev: &mut Device) -> Result<Option<f64>, Error> {
+        log::info!("measuring input impedance");
         let ub_sweep = arange(self.ub_start..(self.ub_end + self.ub_step), self.ub_step).rev();
 
         dev.transaction(Command::EmitterSelect(EmitterSource::VCC))
@@ -238,6 +259,11 @@ impl InputImpedance {
 
         let lin_segment = LinearSegment::find(&data, 5, 0.1, 0.05);
 
+        match lin_segment {
+            Some(v) => log::info!(data:? = v; "input impedance slope:"),
+            None => log::warn!("couldn't determine input impedance from the input characteristic"),
+        }
+
         // NOTE: since the graph is I = f(U) the slope is in units of I/U [S], but we need U/I [ohms]
         Ok(lin_segment.map(|v| v.slope.recip()))
     }
@@ -251,6 +277,7 @@ struct ReverseTransfer {
 
 impl ReverseTransfer {
     async fn measure_npn(&self, dev: &mut Device) -> Result<f32, Error> {
+        log::info!("measuring reverse voltage transfer");
         dev.transaction(Command::EmitterSelect(EmitterSource::GND))
             .await?;
         dev.transaction(Command::CollectorSelect(CollectorSource::GND))
@@ -285,6 +312,7 @@ impl ReverseTransfer {
     }
 
     async fn measure_pnp(&self, dev: &mut Device) -> Result<f32, Error> {
+        log::info!("measuring reverse voltage transfer");
         dev.transaction(Command::EmitterSelect(EmitterSource::VCC))
             .await?;
         dev.transaction(Command::CollectorSelect(CollectorSource::VCC))
@@ -328,6 +356,7 @@ struct ForwardGain {
 
 impl ForwardGain {
     async fn measure_npn(&self, dev: &mut Device) -> Result<f32, Error> {
+        log::info!("measuring forward current gain");
         dev.transaction(Command::EmitterSelect(EmitterSource::GND))
             .await?;
         dev.transaction(Command::CollectorSelect(CollectorSource::VSource))
@@ -365,6 +394,7 @@ impl ForwardGain {
     }
 
     async fn measure_pnp(&self, dev: &mut Device) -> Result<f32, Error> {
+        log::info!("measuring forward current gain");
         dev.transaction(Command::EmitterSelect(EmitterSource::VCC))
             .await?;
         dev.transaction(Command::CollectorSelect(CollectorSource::VSource))
@@ -412,6 +442,7 @@ struct OutputAdmittance {
 
 impl OutputAdmittance {
     async fn measure_npn(&self, dev: &mut Device) -> Result<Option<f64>, Error> {
+        log::info!("measuring output admittance");
         let uce_sweep = arange(
             self.uce_start..(self.uce_end + self.uce_step),
             self.uce_step,
@@ -447,10 +478,16 @@ impl OutputAdmittance {
 
         let lin_segment = LinearSegment::find(&data, 5, 0.01, 0.05);
 
+        match lin_segment {
+            Some(v) => log::info!(data:? = v; "output admittance slope:"),
+            None => log::warn!("couldn't determine input impedance from the output characteristic"),
+        }
+
         Ok(lin_segment.map(|v| v.slope))
     }
 
     async fn measure_pnp(&self, dev: &mut Device) -> Result<Option<f64>, Error> {
+        log::info!("measuring output admittance");
         let uce_sweep = arange(
             self.uce_start..(self.uce_end + self.uce_step),
             self.uce_step,
@@ -491,11 +528,16 @@ impl OutputAdmittance {
 
         let lin_segment = LinearSegment::find(&data, 5, 0.01, 0.05);
 
+        match lin_segment {
+            Some(v) => log::info!(data:? = v; "output admittance slope:"),
+            None => log::warn!("couldn't determine input impedance from the output characteristic"),
+        }
+
         Ok(lin_segment.map(|v| v.slope))
     }
 }
 
-// TODO: this code will be alive once there's some logging
+// NOTE: this code is diagnosed as dead, but those fields are used for debugging
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
 struct LinearSegment {

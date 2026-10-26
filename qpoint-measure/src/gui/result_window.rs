@@ -44,6 +44,11 @@ impl ResultWindow {
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::DisplayAlert(level, message) => {
+                match level {
+                    MessageLevel::Info => log::info!("{}", message),
+                    MessageLevel::Warning => log::warn!("{}", message),
+                    MessageLevel::Error => log::error!("{}", message),
+                }
                 gui::alert(level, message);
                 Task::none()
             }

@@ -17,7 +17,7 @@ const CURRENT_RANGE: RangeInclusive<f32> = 0.0..=150.0;
 
 fn parse_val(v: &str, name: &str) -> Result<f32, String> {
     v.parse()
-        .map_err(|e| format!("Failed to parse {} value `{}`: {}", name, v, e))
+        .map_err(|e| format!("failed to parse {} value `{}`: {}", name, v, e))
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -44,6 +44,7 @@ pub struct PlotSeries {
 
 impl HybridMatrix {
     pub fn write_csv(&self) -> Result<String, Box<dyn std::error::Error>> {
+        log::debug!(data:? = self; "formatting data into CSV:");
         let mut wtr = csv::WriterBuilder::new()
             .delimiter(b';')
             .from_writer(Vec::new());
@@ -93,6 +94,7 @@ impl PlotData {
     }
 
     pub fn write_csv(&self) -> Result<String, Box<dyn std::error::Error>> {
+        log::debug!(data:? = self; "formatting data into CSV:");
         let mut wtr = csv::WriterBuilder::new()
             .delimiter(b';')
             .from_writer(Vec::new());

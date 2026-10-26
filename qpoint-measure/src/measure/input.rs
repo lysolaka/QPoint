@@ -23,7 +23,7 @@ impl InputCharacteristics {
         step: &str,
     ) -> Result<Self, String> {
         if conditions.is_empty() {
-            return Err("Failed to parse conditions: conditions must not be empty".to_string());
+            return Err("failed to parse conditions: conditions must not be empty".to_string());
         }
 
         let mut ce_voltages: Vec<f32> = Vec::with_capacity(conditions.len());
@@ -40,20 +40,20 @@ impl InputCharacteristics {
         for ib in ce_voltages.iter() {
             if !VOLTAGE_RANGE.contains(ib) {
                 return Err(format!(
-                    "Collector-Emitter voltage: {} V is out of range",
+                    "collector-emitter voltage: {} V is out of range",
                     ib
                 ));
             }
         }
 
         if !VOLTAGE_RANGE.contains(&start) {
-            return Err(format!("Start value: {} V is out of range", start));
+            return Err(format!("start value: {} V is out of range", start));
         }
         if !VOLTAGE_RANGE.contains(&end) {
-            return Err(format!("End value: {} V is out of range", end));
+            return Err(format!("end value: {} V is out of range", end));
         }
         if !VOLTAGE_RANGE.contains(&step) {
-            return Err(format!("Step value: {} V is out of range", step));
+            return Err(format!("step value: {} V is out of range", step));
         }
 
         Ok(Self {
@@ -65,6 +65,13 @@ impl InputCharacteristics {
     }
 
     pub async fn measure_npn(self) -> Result<PlotData, Error> {
+        log::info!(
+            data:? = &self,
+            note = "transistor type: NPN",
+            note = "this may take some time",
+            note = "this time depends on the number of conditions and voltages to step through";
+            "starting input characteristics measurement"
+        );
         let ub_sweep = arange(self.ub_start..(self.ub_end + self.ub_step), self.ub_step);
 
         let mut plot_data = PlotData::new(
@@ -85,6 +92,7 @@ impl InputCharacteristics {
             .await?;
 
         for cond in self.ce_voltages {
+            log::debug!("stepping condition Uce = {} V", cond);
             dev.transaction(Command::CollectorSet {
                 value: cond,
                 measure: false,
@@ -123,6 +131,13 @@ impl InputCharacteristics {
     }
 
     pub async fn measure_pnp(self) -> Result<PlotData, Error> {
+        log::info!(
+            data:? = &self,
+            note = "transistor type: PNP",
+            note = "this may take some time",
+            note = "this time depends on the number of conditions and voltages to step through";
+            "starting input characteristics measurement"
+        );
         let ub_sweep = arange(self.ub_start..(self.ub_end + self.ub_step), self.ub_step);
 
         let mut plot_data = PlotData::new(
@@ -153,6 +168,7 @@ impl InputCharacteristics {
         .await?;
 
         for cond in self.ce_voltages {
+            log::debug!("stepping condition Uce = {} V", -cond);
             dev.transaction(Command::CollectorSet {
                 value: 5.0 - cond,
                 measure: false,

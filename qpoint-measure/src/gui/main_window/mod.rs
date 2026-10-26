@@ -102,6 +102,11 @@ impl MainWindow {
                 Task::none()
             }
             Message::DisplayAlert(level, message) => {
+                match level {
+                    MessageLevel::Info => log::info!("alert: \"{}\"", message),
+                    MessageLevel::Warning => log::warn!("alert: \"{}\"", message),
+                    MessageLevel::Error => log::error!("alert: \"{}\"", message),
+                }
                 gui::alert(level, message);
                 Task::none()
             }
@@ -223,7 +228,6 @@ impl MainWindow {
         let measurement_task = match measurement {
             MeasurementType::OutputCharacteristics => {
                 let params = self.output_config.parse()?;
-                eprintln!("Starting measurement ({:?}): {:#?}", transistor, params);
 
                 match transistor {
                     TransistorType::NPN => Task::perform(
@@ -238,7 +242,6 @@ impl MainWindow {
             }
             MeasurementType::InputCharacteristics => {
                 let params = self.input_config.parse()?;
-                eprintln!("Starting measurement ({:?}): {:#?}", transistor, params);
 
                 match transistor {
                     TransistorType::NPN => Task::perform(
@@ -253,7 +256,6 @@ impl MainWindow {
             }
             MeasurementType::HybridParameters => {
                 let params = self.hybrid_config.parse()?;
-                eprintln!("Starting measurement ({:?}): {:#?}", transistor, params);
 
                 match transistor {
                     TransistorType::NPN => Task::perform(
@@ -277,6 +279,6 @@ impl MainWindow {
 fn measurement_done<A>(f: impl FnOnce(A) -> Message, r: Result<A, Error>) -> Message {
     match r {
         Ok(a) => f(a),
-        Err(e) => Message::DisplayAlert(MessageLevel::Error, format!("Failed to measure: {}", e)),
+        Err(e) => Message::DisplayAlert(MessageLevel::Error, format!("Measurement failed: {}", e)),
     }
 }
