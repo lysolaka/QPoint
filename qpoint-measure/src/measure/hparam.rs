@@ -205,7 +205,8 @@ impl InputImpedance {
 
         let lin_segment = LinearSegment::find(&data, 5, 0.1, 0.05);
 
-        Ok(lin_segment.map(|v| v.slope))
+        // NOTE: since the graph is I = f(U) the slope is in units of I/U [S], but we need U/I [ohms]
+        Ok(lin_segment.map(|v| v.slope.recip()))
     }
 
     async fn measure_pnp(&self, dev: &mut Device) -> Result<Option<f64>, Error> {
@@ -237,7 +238,8 @@ impl InputImpedance {
 
         let lin_segment = LinearSegment::find(&data, 5, 0.1, 0.05);
 
-        Ok(lin_segment.map(|v| v.slope))
+        // NOTE: since the graph is I = f(U) the slope is in units of I/U [S], but we need U/I [ohms]
+        Ok(lin_segment.map(|v| v.slope.recip()))
     }
 }
 

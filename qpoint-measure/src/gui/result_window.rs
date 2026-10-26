@@ -60,7 +60,7 @@ impl ResultWindow {
 
     pub fn view(&self) -> Element<'_, Message> {
         let hie = column![
-            text("Input Impedance [\u{03a9}]").style(text::primary),
+            text("Input Impedance [k\u{03a9}]").style(text::primary),
             text_input("", &self.hie).on_input(|_| Message::TextInputNoop)
         ]
         .spacing(8)
@@ -81,7 +81,7 @@ impl ResultWindow {
         .align_x(Alignment::Start);
 
         let hoe = column![
-            text("Output Admittance [S]").style(text::primary),
+            text("Output Admittance [mS]").style(text::primary),
             text_input("", &self.hoe).on_input(|_| Message::TextInputNoop)
         ]
         .spacing(8)

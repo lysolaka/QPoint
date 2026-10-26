@@ -49,10 +49,10 @@ impl HybridMatrix {
             .from_writer(Vec::new());
 
         wtr.write_record([
-            "Input Impedance [\u{03a9}]",
+            "Input Impedance [k\u{03a9}]",
             "Reverse Voltage Transfer",
             "Forward Current Gain",
-            "Output Admittance [S]",
+            "Output Admittance [mS]",
         ])?;
 
         let hie = self
