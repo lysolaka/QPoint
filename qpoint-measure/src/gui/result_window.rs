@@ -65,28 +65,28 @@ impl ResultWindow {
 
     pub fn view(&self) -> Element<'_, Message> {
         let hie = column![
-            text("Input Impedance [k\u{03a9}]").style(text::primary),
+            text("h_ie: Input Impedance [k\u{03a9}]").style(text::primary),
             text_input("", &self.hie).on_input(|_| Message::TextInputNoop)
         ]
         .spacing(8)
         .align_x(Alignment::Start);
 
         let hre = column![
-            text("Reverse Voltage Transfer").style(text::primary),
+            text("h_re: Reverse Voltage Transfer").style(text::primary),
             text_input("", &self.hre).on_input(|_| Message::TextInputNoop)
         ]
         .spacing(8)
         .align_x(Alignment::Start);
 
         let hfe = column![
-            text("Forward Current Gain").style(text::primary),
+            text("h_fe: Forward Current Gain").style(text::primary),
             text_input("", &self.hfe).on_input(|_| Message::TextInputNoop)
         ]
         .spacing(8)
         .align_x(Alignment::Start);
 
         let hoe = column![
-            text("Output Admittance [mS]").style(text::primary),
+            text("h_oe: Output Admittance [mS]").style(text::primary),
             text_input("", &self.hoe).on_input(|_| Message::TextInputNoop)
         ]
         .spacing(8)
