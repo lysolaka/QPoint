@@ -86,7 +86,7 @@ async fn disconnect_sources() {
 async fn measure_npn() {
     // initial conditions for U_BE
     let init = [
-        Command::BaseSelect(BaseSource::VSource),
+        Command::BaseSelect(BaseSource::ISource),
         Command::CollectorSelect(CollectorSource::HighZ),
         Command::EmitterSelect(EmitterSource::GND),
     ];
@@ -95,7 +95,7 @@ async fn measure_npn() {
     RESPONSE_UI_S.reset();
     execute_commands(
         [Command::BaseSet {
-            value: 5.0,
+            value: 150.0,
             measure: true,
         }]
         .into_iter(),
@@ -173,7 +173,7 @@ async fn measure_npn() {
 async fn measure_pnp() {
     // initial conditions for U_BE
     let init = [
-        Command::BaseSelect(BaseSource::VSource),
+        Command::BaseSelect(BaseSource::ISink),
         Command::CollectorSelect(CollectorSource::HighZ),
         Command::EmitterSelect(EmitterSource::VCC),
     ];
@@ -182,7 +182,7 @@ async fn measure_pnp() {
     RESPONSE_UI_S.reset();
     execute_commands(
         [Command::BaseSet {
-            value: 0.0,
+            value: 150.0,
             measure: true,
         }]
         .into_iter(),
