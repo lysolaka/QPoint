@@ -44,7 +44,7 @@ enum Message {
 impl App {
     fn new() -> (Self, Task<Message>) {
         let (id, open) = window::open(Settings {
-            size: Size::new(632.0, 859.0),
+            size: Size::new(632.0, 664.0),
             ..Settings::default()
         });
 

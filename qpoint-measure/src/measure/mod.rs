@@ -22,10 +22,10 @@ fn parse_val(v: &str, name: &str) -> Result<f32, String> {
 
 #[derive(Clone, Copy, Debug)]
 pub struct HybridMatrix {
-    pub hie: Option<f64>,
+    pub hie: f32,
     pub hre: f32,
     pub hfe: f32,
-    pub hoe: Option<f64>,
+    pub hoe: f32,
 }
 
 #[derive(Clone, Debug)]
@@ -56,14 +56,10 @@ impl HybridMatrix {
             "Output Admittance [mS]",
         ])?;
 
-        let hie = self
-            .hie
-            .map_or_else(|| String::from("?"), |v| format!("{:+04.6}", v));
+        let hie = format!("{:+04.6}", self.hie);
         let hre = format!("{:+04.6}", self.hre);
         let hfe = format!("{:+04.6}", self.hfe);
-        let hoe = self
-            .hoe
-            .map_or_else(|| String::from("?"), |v| format!("{:+04.6}", v));
+        let hoe = format!("{:+04.6}", self.hoe);
 
         wtr.write_record([hie, hre, hfe, hoe])?;
 

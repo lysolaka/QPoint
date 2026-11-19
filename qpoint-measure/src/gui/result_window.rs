@@ -23,14 +23,10 @@ pub enum Message {
 
 impl ResultWindow {
     pub fn new(results: HybridMatrix) -> Self {
-        let hie = results
-            .hie
-            .map_or_else(|| String::from("Failed!"), |v| format!("{:+04.6}", v));
+        let hie = format!("{:+04.6}", results.hie);
         let hre = format!("{:+04.6}", results.hre);
         let hfe = format!("{:+04.6}", results.hfe);
-        let hoe = results
-            .hoe
-            .map_or_else(|| String::from("Failed!"), |v| format!("{:+04.6}", v));
+        let hoe = format!("{:+04.6}", results.hoe);
 
         Self {
             results,
@@ -72,7 +68,7 @@ impl ResultWindow {
         .align_x(Alignment::Start);
 
         let hre = column![
-            text("h_re: Reverse Voltage Transfer").style(text::primary),
+            text("h_re: Reverse Voltage Gain").style(text::primary),
             text_input("", &self.hre).on_input(|_| Message::TextInputNoop)
         ]
         .spacing(8)
